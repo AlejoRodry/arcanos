@@ -1,0 +1,8 @@
+{
+  "name": "Lectura Cinemática de Tarot",
+  "description": "Una interfaz web interactiva de estética elegante para grabaciones cinemáticas de poemas de Tarot.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

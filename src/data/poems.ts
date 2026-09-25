@@ -6,16 +6,16 @@ export const poems: Poem[] = [
     title: "0. El Loco",
     subtitle: "El salto al abismo de lo desconocido",
     lines: [
-      "Al borde del precipicio me detengo,",
-      "sin mirar atrás, sin mirar abajo.",
-      "El viento me empuja, y yo me dejo llevar.",
-      "No hay red que me salve,",
-      "solo la fe en el vuelo infinito.",
-      "Cada paso es un comienzo,",
-      "cada caída, una nueva danza.",
-      "Soy la nada y el todo,",
-      "el principio sin final."
-    ]
+      "Al borde del vacío me detengo",
+      "Sin mirar detrás, sin mirar abajo",
+      "El viento me empuja, y yo me dejo llevar",
+      "No hay red que me salve de esta caída",
+      "Solo la certeza en un vuelo infinito",
+      "Cada paso es un nuevo comienzo",
+      "Cada salto, una nueva danza",
+      "Soy la nada y el todo al mismo tiempo",
+      "Una historia que comienza pero nunca termina.",
+    ]    
   },
   {
     id: "1-el-mago",

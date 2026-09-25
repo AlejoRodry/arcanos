@@ -5,6 +5,7 @@ export const poems: Poem[] = [
     id: "0-el-loco",
     title: "0. El Loco",
     subtitle: "El salto al abismo de lo desconocido",
+    hook: "¿Y si el mayor error de tu vida es seguir el camino seguro?",
     lines: [
       "Al borde del vacío me detengo",
       "Sin mirar detrás, sin mirar abajo",
@@ -21,6 +22,7 @@ export const poems: Poem[] = [
     id: "1-el-mago",
     title: "I. El Mago",
     subtitle: "La voluntad que moldea la realidad",
+    hook: "¿Qué harías si descubrieras que la realidad solo espera tu orden para transformarse?",
     lines: [
       "Como es arriba, es abajo.",
       "Tengo los elementos a mi disposición.",
@@ -34,6 +36,7 @@ export const poems: Poem[] = [
     id: "2-la-sacerdotisa",
     title: "II. La Sacerdotisa",
     subtitle: "El velo de los misterios ocultos",
+    hook: "¿Te atreves a escuchar la verdad que tu propia mente te oculta en el silencio?",
     lines: [
       "Guardo los secretos detrás de los pilares.",
       "En el silencio, escucho la voz de la luna.",
@@ -47,6 +50,7 @@ export const poems: Poem[] = [
     id: "3-la-emperatriz",
     title: "III. La Emperatriz",
     subtitle: "La madre fértil, el jardín del universo",
+    hook: "¿Cuándo fue la última vez que te permitiste florecer sin pedirle permiso al mundo?",
     lines: [
       "De mis manos brota el oro de los campos.",
       "Soy el río que nutre la semilla,",
@@ -60,6 +64,7 @@ export const poems: Poem[] = [
     id: "4-el-emperador",
     title: "IV. El Emperador",
     subtitle: "El orden forjado en piedra",
+    hook: "¿Gobiernas realmente tu propia vida, o eres prisionero de tus propias dudas?",
     lines: [
       "Sobre el trono de roca, establezco la ley.",
       "La estructura es la base de mi dominio.",
@@ -73,6 +78,7 @@ export const poems: Poem[] = [
     id: "5-el-hierofante",
     title: "V. El Hierofante",
     subtitle: "El puente entre lo divino y lo terrenal",
+    hook: "¿Buscas respuestas en los dogmas ajenos o en la verdad sagrada de tu propia voz?",
     lines: [
       "Transmito la antigua sabiduría.",
       "Soy la tradición que une generaciones.",
@@ -86,6 +92,7 @@ export const poems: Poem[] = [
     id: "6-los-enamorados",
     title: "VI. Los Enamorados",
     subtitle: "La encrucijada del corazón",
+    hook: "¿Elegirías lo que amas incluso sabiendo que destruirá a la persona que solías ser?",
     lines: [
       "Bajo el ángel de fuego, se toma la decisión.",
       "Dos caminos se bifurcan en el jardín.",
@@ -99,6 +106,7 @@ export const poems: Poem[] = [
     id: "7-el-carro",
     title: "VII. El Carro",
     subtitle: "El triunfo de la voluntad en movimiento",
+    hook: "¿Quién empuña las riendas cuando tus contradicciones intentan partirte en dos?",
     lines: [
       "Controlo las bestias opuestas.",
       "Ni a la izquierda ni a la derecha,",
@@ -112,6 +120,7 @@ export const poems: Poem[] = [
     id: "8-la-justicia",
     title: "VIII. La Justicia",
     subtitle: "La balanza del karma equilibrada",
+    hook: "¿Soportaría tu alma el peso inflexible si fueras juzgado con tu propia vara?",
     lines: [
       "La espada corta las ilusiones,",
       "la balanza pesa las intenciones.",
@@ -125,6 +134,7 @@ export const poems: Poem[] = [
     id: "9-el-ermitano",
     title: "IX. El Ermitaño",
     subtitle: "La luz solitaria en la cima nevada",
+    hook: "¿Le temes a la soledad, o temes encontrarte contigo mismo cuando se apague el ruido?",
     lines: [
       "Me alejo del bullicio del mundo.",
       "En el silencio, mi linterna brilla más fuerte.",
@@ -138,6 +148,7 @@ export const poems: Poem[] = [
     id: "10-la-rueda",
     title: "X. La Rueda de la Fortuna",
     subtitle: "El giro incesante del destino",
+    hook: "¿Estás dispuesto a perderlo todo hoy para descubrir quién eres cuando nada queda?",
     lines: [
       "Lo que está arriba caerá,",
       "lo que está abajo se alzará.",
@@ -151,6 +162,7 @@ export const poems: Poem[] = [
     id: "11-la-fuerza",
     title: "XI. La Fuerza",
     subtitle: "El coraje gentil que doma a la bestia",
+    hook: "¿Es más poderoso el rugido que destruye, o la caricia serena que doma a la fiera?",
     lines: [
       "No someto con cadenas, sino con compasión.",
       "El león se rinde ante la caricia.",
@@ -164,6 +176,7 @@ export const poems: Poem[] = [
     id: "12-el-colgado",
     title: "XII. El Colgado",
     subtitle: "La pausa sacrificial, la nueva perspectiva",
+    hook: "¿Qué estás dispuesto a sacrificar para finalmente ver el mundo con nuevos ojos?",
     lines: [
       "Suspendido en el tiempo, invierto mi mundo.",
       "Me entrego a la inacción,",
@@ -177,6 +190,7 @@ export const poems: Poem[] = [
     id: "13-la-muerte",
     title: "XIII. La Muerte",
     subtitle: "El inevitable final, el renacer oscuro",
+    hook: "¿Por qué lloras lo que termina si es el único abono capaz de hacerte renacer?",
     lines: [
       "Cae el telón sobre los días marchitos.",
       "Con guadaña en mano, siego las ilusiones,",
@@ -190,6 +204,7 @@ export const poems: Poem[] = [
     id: "14-la-templanza",
     title: "XIV. La Templanza",
     subtitle: "El equilibrio alquímico entre abismos",
+    hook: "¿Cómo logras mezclar fuego y hielo sin que ninguno extinga la luz del otro?",
     lines: [
       "Un pie en la tierra, otro en las aguas.",
       "Vierto el fuego en el hielo, y no se apaga.",
@@ -202,6 +217,7 @@ export const poems: Poem[] = [
     id: "15-el-diablo",
     title: "XV. El Diablo",
     subtitle: "Las cadenas doradas del deseo",
+    hook: "¿Son tus cadenas de hierro, o te enamoraste en secreto de la jaula que te encierra?",
     lines: [
       "Soy la sed que nunca se apaga.",
       "Te até con hilos tan finos",
@@ -215,6 +231,7 @@ export const poems: Poem[] = [
     id: "16-la-torre",
     title: "XVI. La Torre",
     subtitle: "El relámpago liberador, la caída de los cimientos",
+    hook: "¿Y si la mayor bendición de tu destino fuera ver cómo se derrumban tus falsas certezas?",
     lines: [
       "El rayo destruye lo que creías inamovible.",
       "La falsa seguridad se derrumba.",
@@ -228,6 +245,7 @@ export const poems: Poem[] = [
     id: "17-la-estrella",
     title: "XVII. La Estrella",
     subtitle: "La esperanza derramada en las aguas sanadoras",
+    hook: "¿Puedes ver la luz en la oscuridad absoluta cuando ya no queda nada que perder?",
     lines: [
       "Después de la tormenta, brillo en el firmamento.",
       "Vierto las aguas de la renovación",
@@ -241,6 +259,7 @@ export const poems: Poem[] = [
     id: "18-la-luna",
     title: "XVIII. La Luna",
     subtitle: "El reino de los sueños, miedos y reflejos",
+    hook: "¿Distingues tus intuiciones más puras de los fantasmas que engendra tu propio miedo?",
     lines: [
       "Camino por el sendero pálido de la noche.",
       "Donde las sombras engañan",
@@ -254,6 +273,7 @@ export const poems: Poem[] = [
     id: "19-el-sol",
     title: "XIX. El Sol",
     subtitle: "La claridad radiante, la alegría desenfrenada",
+    hook: "¿Tienes el coraje de brillar con tanta fuerza que nadie pueda ignorar tu existencia?",
     lines: [
       "Irradio vida, caliento la semilla dormida.",
       "Las sombras se disipan bajo mi mirada de oro.",
@@ -267,6 +287,7 @@ export const poems: Poem[] = [
     id: "20-el-juicio",
     title: "XX. El Juicio",
     subtitle: "El llamado final, el despertar del alma",
+    hook: "¿Responderás al despertar de tu verdadera vocación cuando escuches el llamado final?",
     lines: [
       "La trompeta suena en los cielos abismales.",
       "Las tumbas se abren, los muertos se levantan.",
@@ -280,6 +301,7 @@ export const poems: Poem[] = [
     id: "21-el-mundo",
     title: "XXI. El Mundo",
     subtitle: "La culminación, la danza del universo entero",
+    hook: "¿Comprendes ya que el universo entero no está afuera de ti, sino latiendo en tu pecho?",
     lines: [
       "El círculo se cierra, la corona se completa.",
       "He caminado por las sombras y la luz,",
@@ -293,6 +315,7 @@ export const poems: Poem[] = [
     id: "20-el-eon",
     title: "XX. El Eón",
     subtitle: "La mirada eterna, la nueva era",
+    hook: "¿Estás preparado para contemplar el inicio y el fin de los tiempos en un solo parpadeo?",
     lines: [
       "No observo el reloj del hombre, sino el reloj de las estrellas.",
       "El tiempo es un océano, y yo soy la marea.",
@@ -306,6 +329,7 @@ export const poems: Poem[] = [
     id: "0-el-bufon",
     title: "0. El Bufón",
     subtitle: "La risa que desgarra la ilusión, la locura latente",
+    hook: "¿Te ríes del abismo para no llorar, o porque descubriste que todo es una farsa cósmica?",
     lines: [
       "El mundo es un escenario, y yo, su espejo deforme.",
       "Mi carcajada rompe el silencio solemne de los dioses.",
@@ -319,6 +343,7 @@ export const poems: Poem[] = [
     id: "la-fe",
     title: "La Fe",
     subtitle: "La devoción ciega, la voluntad de creer",
+    hook: "¿Te atreverías a saltar al vacío creyendo ciegamente en algo que nadie más puede ver?",
     lines: [
       "Cuando la lógica se quiebra, yo sostengo el puente.",
       "No pido pruebas, exijo el salto del corazón.",
@@ -332,6 +357,7 @@ export const poems: Poem[] = [
     id: "el-consejero",
     title: "I. El Consejero",
     subtitle: "El alivio del dolor, la realidad rediseñada",
+    hook: "¿Preferirías una dulce mentira donde no existe el dolor, o la cruda libertad de sufrir y elegir?",
     lines: [
       "Ven, descansa tu carga en mis manos.",
       "Veo las cicatrices que el mundo te ha infligido,",

@@ -3,6 +3,8 @@ import { motion, AnimatePresence } from 'motion/react';
 import { ParticleBackground } from './components/ParticleBackground';
 import { CinematicReader } from './components/CinematicReader';
 import { VoiceSelectorModal } from './components/VoiceSelectorModal';
+import { PWAInstallButton } from './components/PWAInstallButton';
+import { OfflineIndicator } from './components/OfflineIndicator';
 import { useSpeech } from './hooks/useSpeech';
 import { poems } from './data/poems';
 import { 
@@ -230,6 +232,9 @@ export default function App() {
         theme === 'cosmos' ? 'bg-[#020108]' : 'bg-[#050B14]'
       }`}
     >
+      {/* Offline Connectivity Indicator */}
+      <OfflineIndicator />
+
       {/* Hidden Audio Element */}
       {audioSrc && (
         <audio 
@@ -745,6 +750,11 @@ export default function App() {
                   </div>
                 )}
               </div>
+
+              {/* PWA Install Button for Desktop */}
+              <div className="mt-3">
+                <PWAInstallButton variant="full" className="w-full" />
+              </div>
             </div>
           </motion.div>
         )}
@@ -1053,6 +1063,9 @@ export default function App() {
                     Cambiar
                   </button>
                 </div>
+
+                {/* PWA Install Button for Mobile */}
+                <PWAInstallButton variant="full" className="w-full mt-1" />
               </div>
             </motion.div>
           </div>

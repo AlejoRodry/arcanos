@@ -11,6 +11,17 @@ export const useSpeech = () => {
   const [currentLineIndex, setCurrentLineIndex] = useState(-1);
   const [currentWordIndex, setCurrentWordIndex] = useState(-1);
   const [voices, setVoices] = useState<SpeechSynthesisVoice[]>([]);
+  const [selectedVoiceURI, setSelectedVoiceURIState] = useState<string | null>(() => {
+    return localStorage.getItem('radiant_selected_voice_uri');
+  });
+  const [speechRate, setSpeechRateState] = useState<number>(() => {
+    const saved = localStorage.getItem('radiant_speech_rate');
+    return saved ? parseFloat(saved) : 0.85;
+  });
+  const [speechPitch, setSpeechPitchState] = useState<number>(() => {
+    const saved = localStorage.getItem('radiant_speech_pitch');
+    return saved ? parseFloat(saved) : 0.75;
+  });
 
   const isSkippingRef = useRef(false);
   const currentPoemRef = useRef<Poem | null>(null);
@@ -18,22 +29,65 @@ export const useSpeech = () => {
   const wordTimersRef = useRef<NodeJS.Timeout[]>([]);
   const stageTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
+  const selectedVoiceURIRef = useRef<string | null>(selectedVoiceURI);
+  const speechRateRef = useRef<number>(speechRate);
+  const speechPitchRef = useRef<number>(speechPitch);
+
+  selectedVoiceURIRef.current = selectedVoiceURI;
+  speechRateRef.current = speechRate;
+  speechPitchRef.current = speechPitch;
+
+  const setSelectedVoiceURI = useCallback((uri: string) => {
+    setSelectedVoiceURIState(uri);
+    selectedVoiceURIRef.current = uri;
+    localStorage.setItem('radiant_selected_voice_uri', uri);
+  }, []);
+
+  const setSpeechRate = useCallback((rate: number) => {
+    setSpeechRateState(rate);
+    speechRateRef.current = rate;
+    localStorage.setItem('radiant_speech_rate', rate.toString());
+  }, []);
+
+  const setSpeechPitch = useCallback((pitch: number) => {
+    setSpeechPitchState(pitch);
+    speechPitchRef.current = pitch;
+    localStorage.setItem('radiant_speech_pitch', pitch.toString());
+  }, []);
+
   useEffect(() => {
     const loadVoices = () => {
+      if (typeof window === 'undefined' || !window.speechSynthesis) return;
       const availableVoices = window.speechSynthesis.getVoices();
-      const esVoices = availableVoices.filter(v => v.lang.startsWith('es'));
-      setVoices(esVoices.length > 0 ? esVoices : availableVoices);
+      if (availableVoices && availableVoices.length > 0) {
+        setVoices(availableVoices);
+
+        // If no selected voice or currently selected voice isn't valid, pick optimal Spanish default
+        const saved = localStorage.getItem('radiant_selected_voice_uri');
+        const hasSaved = saved && availableVoices.some(v => v.voiceURI === saved || v.name === saved);
+
+        if (!hasSaved && !selectedVoiceURIRef.current) {
+          const defaultVoice = availableVoices.find(v => v.name.includes('Google') && v.lang.startsWith('es'))
+            || availableVoices.find(v => v.lang.startsWith('es-ES'))
+            || availableVoices.find(v => v.lang.startsWith('es'))
+            || availableVoices[0];
+
+          if (defaultVoice) {
+            setSelectedVoiceURI(defaultVoice.voiceURI);
+          }
+        }
+      }
     };
 
     loadVoices();
-    if (window.speechSynthesis && speechSynthesis.onvoiceschanged !== undefined) {
-      speechSynthesis.onvoiceschanged = loadVoices;
+    if (typeof window !== 'undefined' && window.speechSynthesis) {
+      window.speechSynthesis.onvoiceschanged = loadVoices;
     }
 
     return () => {
       clearTimers();
     };
-  }, []);
+  }, [setSelectedVoiceURI]);
 
   const clearTimers = () => {
     wordTimersRef.current.forEach(t => clearTimeout(t));
@@ -43,6 +97,19 @@ export const useSpeech = () => {
       stageTimeoutRef.current = null;
     }
   };
+
+  // Preview a voice with a sample sentence
+  const previewVoice = useCallback((voice: SpeechSynthesisVoice, customRate?: number, customPitch?: number) => {
+    if (typeof window === 'undefined' || !window.speechSynthesis) return;
+    window.speechSynthesis.cancel();
+    clearTimers();
+    const u = new SpeechSynthesisUtterance("El destino susurra secretos entre los arcanos.");
+    u.voice = voice;
+    u.lang = voice.lang;
+    u.rate = customRate ?? speechRateRef.current;
+    u.pitch = customPitch ?? speechPitchRef.current;
+    window.speechSynthesis.speak(u);
+  }, []);
 
   // Calculate expected spoken duration of a Spanish word based on phonetics and length
   const getWordDuration = (word: string, rate: number = 0.85): number => {
@@ -67,14 +134,24 @@ export const useSpeech = () => {
     activeUtterance = utterance;
 
     if (voices.length > 0) {
-      utterance.voice = voices.find(v => v.name.includes('Google') && v.lang.startsWith('es')) 
+      const chosenVoice = voices.find(v => v.voiceURI === selectedVoiceURIRef.current)
+        || (selectedVoiceURIRef.current ? voices.find(v => v.name === selectedVoiceURIRef.current) : null)
+        || voices.find(v => v.name.includes('Google') && v.lang.startsWith('es')) 
+        || voices.find(v => v.lang.startsWith('es-ES'))
         || voices.find(v => v.lang.startsWith('es')) 
         || voices[0];
+
+      if (chosenVoice) {
+        utterance.voice = chosenVoice;
+        utterance.lang = chosenVoice.lang;
+      }
+    } else {
+      utterance.lang = 'es-ES';
     }
 
-    utterance.lang = 'es-ES';
-    utterance.rate = 0.85; // Natural, clear, dignified pace
-    utterance.pitch = 0.7; // Deeper resonant tone
+    const currentRate = speechRateRef.current;
+    utterance.rate = currentRate;
+    utterance.pitch = speechPitchRef.current;
 
     const words = text.trim().split(/\s+/);
 
@@ -88,7 +165,7 @@ export const useSpeech = () => {
       words.forEach((word, idx) => {
         if (idx === 0) return;
         const prevWord = words[idx - 1];
-        accumulatedTime += getWordDuration(prevWord, 0.85);
+        accumulatedTime += getWordDuration(prevWord, currentRate);
 
         const timer = setTimeout(() => {
           setCurrentWordIndex(curr => Math.max(curr, idx));
@@ -266,9 +343,7 @@ export const useSpeech = () => {
           },
           () => {
             stageTimeoutRef.current = setTimeout(() => {
-              // start lines
               if (currentPoemRef.current) {
-                // start lines
                 const startFirstLine = (idx: number) => {
                   if (idx >= poem.lines.length) {
                     setIsSpeaking(false);
@@ -367,6 +442,14 @@ export const useSpeech = () => {
     speechStage,
     currentLineIndex,
     currentWordIndex,
+    voices,
+    selectedVoiceURI,
+    setSelectedVoiceURI,
+    speechRate,
+    setSpeechRate,
+    speechPitch,
+    setSpeechPitch,
+    previewVoice,
     speakPoem,
     stop,
     skip

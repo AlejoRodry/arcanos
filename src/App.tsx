@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { ParticleBackground } from './components/ParticleBackground';
 import { CinematicReader } from './components/CinematicReader';
+import { VoiceSelectorModal } from './components/VoiceSelectorModal';
 import { useSpeech } from './hooks/useSpeech';
 import { poems } from './data/poems';
 import { 
@@ -16,7 +17,9 @@ import {
   ChevronRight, 
   Compass,
   Info,
-  RotateCw
+  RotateCw,
+  Volume1,
+  Mic
 } from 'lucide-react';
 import { circleInscriptions, CircleInscription, getNextCircleInscription } from './data/circleInscriptions';
 
@@ -29,14 +32,44 @@ export default function App() {
   const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState(false);
   const [currentInscription, setCurrentInscription] = useState<CircleInscription>(getNextCircleInscription);
   const [isInscriptionModalOpen, setIsInscriptionModalOpen] = useState(false);
+  const [isVoiceModalOpen, setIsVoiceModalOpen] = useState(false);
   
-  // Audio State
+  // Audio State & Volume Continuum (Default low & atmospheric: 0.20)
   const [audioSrc, setAudioSrc] = useState<string | null>(null);
   const [isAudioPlaying, setIsAudioPlaying] = useState(false);
+  const [musicVolume, setMusicVolume] = useState<number>(() => {
+    const saved = localStorage.getItem('radiant_music_volume');
+    return saved !== null ? parseFloat(saved) : 0.20;
+  });
+  const [isMuted, setIsMuted] = useState(false);
+  const [showMobileVolumeSlider, setShowMobileVolumeSlider] = useState(false);
   const audioRef = useRef<HTMLAudioElement>(null);
   const touchStartX = useRef<number | null>(null);
 
-  const { isSpeaking, speechStage, currentLineIndex, currentWordIndex, speakPoem, stop, skip } = useSpeech();
+  const { 
+    isSpeaking, 
+    speechStage, 
+    currentLineIndex, 
+    currentWordIndex, 
+    voices,
+    selectedVoiceURI,
+    setSelectedVoiceURI,
+    speechRate,
+    setSpeechRate,
+    speechPitch,
+    setSpeechPitch,
+    previewVoice,
+    speakPoem, 
+    stop, 
+    skip 
+  } = useSpeech();
+
+  // Sync audio element volume automatically on state changes
+  useEffect(() => {
+    if (audioRef.current) {
+      audioRef.current.volume = isMuted ? 0 : theaterMode ? musicVolume * 0.25 : musicVolume;
+    }
+  }, [musicVolume, isMuted, theaterMode]);
 
   const handleNextInscription = () => {
     const currentIdx = circleInscriptions.findIndex(c => c.id === currentInscription.id);
@@ -48,6 +81,11 @@ export default function App() {
   const selectedPoem = poems.find(p => p.id === selectedPoemId) || poems[0];
   const currentIndex = poems.findIndex(p => p.id === selectedPoemId);
 
+  const activeVoice = voices.find(v => v.voiceURI === selectedVoiceURI || v.name === selectedVoiceURI);
+  const activeVoiceName = activeVoice 
+    ? activeVoice.name.replace(/Microsoft\s+/gi, '').replace(/\s*\(.*\)/g, '').trim()
+    : 'Voz del Sistema';
+
   // Audio Handling
   const handleAudioUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -55,8 +93,10 @@ export default function App() {
       const url = URL.createObjectURL(file);
       setAudioSrc(url);
       setIsAudioPlaying(true);
+      setIsMuted(false);
       if (audioRef.current) {
         audioRef.current.load();
+        audioRef.current.volume = theaterMode ? musicVolume * 0.25 : musicVolume;
         audioRef.current.play().catch(console.error);
       }
     }
@@ -73,31 +113,50 @@ export default function App() {
     }
   };
 
+  const handleVolumeChange = (newVol: number) => {
+    setMusicVolume(newVol);
+    localStorage.setItem('radiant_music_volume', newVol.toString());
+    if (newVol > 0 && isMuted) {
+      setIsMuted(false);
+    }
+  };
+
+  const toggleMute = () => {
+    setIsMuted(prev => !prev);
+  };
+
+  const getVolumeIcon = (vol: number, muted: boolean, size = 16) => {
+    if (muted || vol === 0) return <VolumeX size={size} />;
+    if (vol < 0.5) return <Volume1 size={size} />;
+    return <Volume2 size={size} />;
+  };
+
   const handleStart = useCallback(() => {
     if (theaterMode) return;
     
     setTheaterMode(true);
     setIsMobileDrawerOpen(false);
+    setShowMobileVolumeSlider(false);
     
     if (audioRef.current) {
-      audioRef.current.volume = 0.15;
+      audioRef.current.volume = isMuted ? 0 : musicVolume * 0.25;
     }
 
     speakPoem(selectedPoem, () => {
       setTheaterMode(false);
       if (audioRef.current) {
-        audioRef.current.volume = 0.4;
+        audioRef.current.volume = isMuted ? 0 : musicVolume;
       }
     });
-  }, [theaterMode, selectedPoem, speakPoem]);
+  }, [theaterMode, selectedPoem, speakPoem, isMuted, musicVolume]);
 
   const handleStop = useCallback(() => {
     stop();
     setTheaterMode(false);
     if (audioRef.current) {
-      audioRef.current.volume = 0.4;
+      audioRef.current.volume = isMuted ? 0 : musicVolume;
     }
-  }, [stop]);
+  }, [stop, isMuted, musicVolume]);
 
   // Touch swipe gestures for mobile navigation
   const handleTouchStart = (e: React.TouchEvent) => {
@@ -167,7 +226,7 @@ export default function App() {
     <div 
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
-      className={`relative min-h-screen w-full overflow-hidden font-serif selection:bg-[#D4AF37] selection:text-[#050B14] transition-colors duration-1000 ${
+      className={`relative h-screen h-[100dvh] w-full overflow-hidden font-serif selection:bg-[#D4AF37] selection:text-[#050B14] transition-colors duration-1000 ${
         theme === 'cosmos' ? 'bg-[#020108]' : 'bg-[#050B14]'
       }`}
     >
@@ -536,23 +595,32 @@ export default function App() {
                   Arcanos
                 </h1>
                 
-                <div className="flex items-center gap-1.5">
+                <div className="flex items-center gap-2.5">
+                  {/* Selector de Voz Modal Trigger */}
+                  <button
+                    onClick={() => setIsVoiceModalOpen(true)}
+                    className="w-10 h-10 flex items-center justify-center text-[#D4AF37]/80 hover:text-[#D4AF37] transition-all rounded-xl bg-white/[0.03] hover:bg-[#D4AF37]/15 border border-white/10 hover:border-[#D4AF37]/40 active:scale-95 group relative shadow-sm"
+                    title="Elegir voz del narrador"
+                  >
+                    <Mic size={18} />
+                  </button>
+
                   {/* Sentencia del Círculo Modal Trigger */}
                   <button
                     onClick={() => setIsInscriptionModalOpen(true)}
-                    className="p-2.5 text-[#D4AF37]/75 hover:text-[#D4AF37] transition-all rounded-xl hover:bg-white/5 border border-white/5 group relative"
+                    className="w-10 h-10 flex items-center justify-center text-[#D4AF37]/80 hover:text-[#D4AF37] transition-all rounded-xl bg-white/[0.03] hover:bg-[#D4AF37]/15 border border-white/10 hover:border-[#D4AF37]/40 active:scale-95 group relative shadow-sm"
                     title="Ver qué dice el Círculo Sagrado del Fondo"
                   >
-                    <Info size={19} />
+                    <Info size={18} />
                   </button>
 
                   {/* Theme Toggle Button */}
                   <button
                     onClick={() => setTheme(t => t === 'astrolabe' ? 'cosmos' : 'astrolabe')}
-                    className="p-2.5 text-[#D4AF37]/60 hover:text-[#D4AF37] transition-colors rounded-xl hover:bg-white/5 border border-white/5"
+                    className="w-10 h-10 flex items-center justify-center text-[#D4AF37]/80 hover:text-[#D4AF37] transition-all rounded-xl bg-white/[0.03] hover:bg-[#D4AF37]/15 border border-white/10 hover:border-[#D4AF37]/40 active:scale-95 shadow-sm"
                     title="Cambiar Escenario"
                   >
-                    {theme === 'astrolabe' ? <Moon size={20} /> : <Sparkles size={20} />}
+                    {theme === 'astrolabe' ? <Moon size={18} /> : <Sparkles size={18} />}
                   </button>
                 </div>
               </div>
@@ -595,6 +663,24 @@ export default function App() {
             </div>
 
             <div>
+              {/* Active Voice Pill Selector */}
+              <button
+                onClick={() => setIsVoiceModalOpen(true)}
+                className="w-full mb-3 flex items-center justify-between px-3.5 py-2.5 rounded-xl bg-white/[0.03] border border-white/10 hover:border-[#D4AF37]/40 text-xs text-gray-300 transition-all group"
+                title="Configurar voz y afinación de la lectura"
+              >
+                <div className="flex items-center gap-2 min-w-0">
+                  <Mic size={14} className="text-[#D4AF37] shrink-0" />
+                  <span className="text-[11px] text-gray-400 font-sans">Voz:</span>
+                  <span className="font-serif text-[#D4AF37] truncate font-medium">
+                    {activeVoiceName}
+                  </span>
+                </div>
+                <span className="text-[10px] text-[#D4AF37] group-hover:underline shrink-0 font-sans">
+                  Cambiar
+                </span>
+              </button>
+
               <button
                 onClick={handleStart}
                 className="w-full group relative inline-flex flex-shrink-0 items-center justify-center gap-3 px-6 py-4 bg-transparent overflow-hidden text-[#D4AF37] border border-[#D4AF37]/40 hover:border-[#D4AF37] rounded-xl transition-all duration-500 ease-out shadow-[0_0_25px_rgba(212,175,55,0.15)]"
@@ -606,27 +692,57 @@ export default function App() {
                 </span>
               </button>
 
-              {/* Desktop Audio Controls */}
-              <div className="mt-5 flex items-center justify-between text-xs text-gray-400">
-                <label className="flex items-center gap-2 cursor-pointer hover:text-[#D4AF37] transition-colors group">
-                  <Upload size={14} className="group-hover:-translate-y-0.5 transition-transform" />
-                  <span className="tracking-wider">Subir Música (.mp3)</span>
-                  <input 
-                    type="file" 
-                    accept="audio/*" 
-                    className="hidden" 
-                    onChange={handleAudioUpload}
-                  />
-                </label>
+              {/* Desktop Audio Controls with MD4 Volume Continuum */}
+              <div className="mt-5 p-3 rounded-2xl bg-white/[0.03] border border-white/10 space-y-2.5">
+                <div className="flex items-center justify-between text-xs text-gray-400">
+                  <label className="flex items-center gap-2 cursor-pointer hover:text-[#D4AF37] transition-colors group">
+                    <Upload size={14} className="group-hover:-translate-y-0.5 transition-transform" />
+                    <span className="tracking-wider">
+                      {audioSrc ? "Cambiar Música" : "Subir Música (.mp3)"}
+                    </span>
+                    <input 
+                      type="file" 
+                      accept="audio/*" 
+                      className="hidden" 
+                      onChange={handleAudioUpload}
+                    />
+                  </label>
+
+                  {audioSrc && (
+                    <button 
+                      onClick={toggleAudio}
+                      className="px-2 py-0.5 rounded text-[11px] font-sans border border-[#D4AF37]/30 text-[#D4AF37] hover:bg-[#D4AF37]/15 transition-all"
+                    >
+                      {isAudioPlaying ? "Pausar" : "Reproducir"}
+                    </button>
+                  )}
+                </div>
 
                 {audioSrc && (
-                  <button 
-                    onClick={toggleAudio}
-                    className="p-1.5 hover:text-[#D4AF37] transition-colors rounded"
-                    title={isAudioPlaying ? "Pausar música" : "Reproducir música"}
-                  >
-                    {isAudioPlaying ? <Volume2 size={16} /> : <VolumeX size={16} />}
-                  </button>
+                  <div className="pt-2 border-t border-white/5 flex items-center gap-2.5">
+                    <button
+                      onClick={toggleMute}
+                      className="text-[#D4AF37] hover:opacity-80 active:scale-95 transition-all"
+                      title={isMuted ? "Reactivar sonido" : "Silenciar música"}
+                    >
+                      {getVolumeIcon(musicVolume, isMuted, 16)}
+                    </button>
+
+                    <input
+                      type="range"
+                      min="0"
+                      max="1"
+                      step="0.01"
+                      value={isMuted ? 0 : musicVolume}
+                      onChange={(e) => handleVolumeChange(parseFloat(e.target.value))}
+                      className="flex-1 h-1.5 bg-white/15 rounded-lg appearance-none cursor-pointer accent-[#D4AF37]"
+                      title={`Volumen: ${Math.round((isMuted ? 0 : musicVolume) * 100)}%`}
+                    />
+
+                    <span className="text-[10px] font-mono text-[#D4AF37] w-8 text-right font-medium">
+                      {Math.round((isMuted ? 0 : musicVolume) * 100)}%
+                    </span>
+                  </div>
                 )}
               </div>
             </div>
@@ -643,114 +759,145 @@ export default function App() {
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
-            className="md:hidden absolute top-0 left-0 right-0 z-30 px-5 py-4 flex items-center justify-between border-b border-white/10 bg-[#02060F]/80 backdrop-blur-xl"
+            className="md:hidden absolute top-0 left-0 right-0 z-30 px-3.5 sm:px-5 py-2.5 sm:py-3 flex items-center justify-between border-b border-white/10 bg-[#02060F]/90 backdrop-blur-2xl shadow-[0_4px_20px_rgba(0,0,0,0.5)]"
           >
-            <div className="flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-[#D4AF37] shadow-[0_0_8px_#D4AF37]" />
-              <h1 className="text-xl font-serif text-[#D4AF37] tracking-wider uppercase font-semibold">
+            {/* Brand and Arcana index indicator */}
+            <div className="flex items-center gap-2 shrink-0">
+              <span className="w-2 h-2 rounded-full bg-[#D4AF37] shadow-[0_0_10px_#D4AF37]" />
+              <h1 className="text-sm sm:text-base font-serif text-[#D4AF37] tracking-wider uppercase font-semibold">
                 Arcanos
               </h1>
-              <span className="text-[11px] font-mono text-gray-400 ml-1 px-2 py-0.5 rounded-full bg-white/5 border border-white/10">
+              <span className="text-[10px] font-mono text-gray-400 px-2 py-0.5 rounded-full bg-white/5 border border-white/10">
                 {currentIndex + 1}/{poems.length}
               </span>
             </div>
 
-            <div className="flex items-center gap-2">
-              {/* Audio Upload / Play on Mobile */}
-              <label className="p-2 text-gray-400 hover:text-[#D4AF37] rounded-xl hover:bg-white/5 cursor-pointer">
-                <Upload size={18} />
-                <input 
-                  type="file" 
-                  accept="audio/*" 
-                  className="hidden" 
-                  onChange={handleAudioUpload}
-                />
-              </label>
-
-              {audioSrc && (
-                <button 
-                  onClick={toggleAudio}
-                  className="p-2 text-[#D4AF37] rounded-xl hover:bg-white/5"
+            {/* Quick Actions (Spacious MD4 Top Bar - No overcrowding) */}
+            <div className="flex items-center gap-3 sm:gap-4 shrink-0">
+              {/* Unified Audio Controller Button */}
+              {!audioSrc ? (
+                <label 
+                  className="w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center text-gray-300 hover:text-[#D4AF37] rounded-xl bg-white/[0.04] border border-white/10 hover:border-[#D4AF37]/40 hover:bg-[#D4AF37]/10 cursor-pointer active:scale-95 transition-all shadow-sm"
+                  title="Cargar música de fondo (.mp3)"
                 >
-                  {isAudioPlaying ? <Volume2 size={18} /> : <VolumeX size={18} />}
+                  <Upload size={16} />
+                  <input 
+                    type="file" 
+                    accept="audio/*" 
+                    className="hidden" 
+                    onChange={handleAudioUpload}
+                  />
+                </label>
+              ) : (
+                <button 
+                  onClick={() => setShowMobileVolumeSlider(prev => !prev)}
+                  className={`w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center rounded-xl transition-all active:scale-95 shadow-sm relative ${
+                    showMobileVolumeSlider 
+                      ? 'border border-[#D4AF37] bg-[#D4AF37]/25 text-[#D4AF37] shadow-[0_0_12px_rgba(212,175,55,0.3)]' 
+                      : 'border border-white/10 bg-white/[0.04] text-[#D4AF37] hover:border-[#D4AF37]/40 hover:bg-[#D4AF37]/10'
+                  }`}
+                  title="Ajustar volumen y música"
+                >
+                  {getVolumeIcon(musicVolume, isMuted, 17)}
+                  {isAudioPlaying && !isMuted && (
+                    <span className="absolute top-1 right-1 w-1.5 h-1.5 rounded-full bg-[#D4AF37] shadow-[0_0_6px_#D4AF37]" />
+                  )}
                 </button>
               )}
-
-              {/* Inscription Info Trigger on Mobile */}
-              <button
-                onClick={() => setIsInscriptionModalOpen(true)}
-                className="p-2 text-[#D4AF37]/80 hover:text-[#D4AF37] rounded-xl hover:bg-white/5"
-                title="Sentencia del Círculo Sagrado"
-              >
-                <Info size={18} />
-              </button>
 
               {/* Theme Toggle */}
               <button
                 onClick={() => setTheme(t => t === 'astrolabe' ? 'cosmos' : 'astrolabe')}
-                className="p-2 text-[#D4AF37]/80 hover:text-[#D4AF37] rounded-xl hover:bg-white/5"
+                className="w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center text-[#D4AF37]/80 hover:text-[#D4AF37] rounded-xl bg-white/[0.04] border border-white/10 hover:border-[#D4AF37]/40 hover:bg-[#D4AF37]/10 active:scale-95 transition-all shadow-sm"
+                title="Cambiar escenario cósmico"
               >
-                {theme === 'astrolabe' ? <Moon size={18} /> : <Sparkles size={18} />}
+                {theme === 'astrolabe' ? <Moon size={16} /> : <Sparkles size={16} />}
               </button>
+
+              {/* Sutil Separator */}
+              <div className="w-[1px] h-4.5 bg-white/15 mx-0.5 shrink-0" />
 
               {/* Arcana Selector Drawer Trigger */}
               <button
                 onClick={() => setIsMobileDrawerOpen(true)}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-[#D4AF37]/30 bg-[#D4AF37]/10 text-[#D4AF37] text-xs font-sans tracking-wider"
+                className="h-9 sm:h-10 px-3 sm:px-3.5 flex items-center gap-1.5 rounded-xl border border-[#D4AF37]/50 bg-[#D4AF37]/15 text-[#D4AF37] text-xs font-sans font-semibold tracking-wide active:scale-95 shadow-[0_0_12px_rgba(212,175,55,0.2)] transition-all shrink-0 hover:bg-[#D4AF37]/25"
+                title="Ver lista de arcanos"
               >
-                <Compass size={14} />
-                <span>Lista</span>
+                <Compass size={15} className="shrink-0" />
+                <span className="text-[11px] font-bold">Lista</span>
               </button>
             </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
 
-      {/* ======================================================== */}
-      {/* --- ANDROID / MOBILE BOTTOM DOCK (Visible only on < md) --- */}
-      {/* ======================================================== */}
-      <AnimatePresence>
-        {!theaterMode && (
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 30 }}
-            className="md:hidden absolute bottom-0 left-0 right-0 z-30 p-4 flex items-center justify-between gap-3 bg-gradient-to-t from-[#02060F] via-[#02060F]/90 to-transparent pointer-events-auto"
-          >
-            {/* Previous Arcana Button */}
-            <button
-              onClick={() => {
-                const prev = (currentIndex - 1 + poems.length) % poems.length;
-                setSelectedPoemId(poems[prev].id);
-              }}
-              className="w-12 h-12 rounded-2xl border border-white/10 bg-[#050B14]/80 backdrop-blur-xl text-gray-300 flex items-center justify-center active:scale-95 transition-transform"
-              aria-label="Arcano anterior"
-            >
-              <ChevronLeft size={22} />
-            </button>
+            {/* Mobile Volume Floating Popover */}
+            <AnimatePresence>
+              {showMobileVolumeSlider && audioSrc && (
+                <motion.div
+                  initial={{ opacity: 0, y: -8, scale: 0.96 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: -8, scale: 0.96 }}
+                  transition={{ duration: 0.2 }}
+                  className="absolute top-full left-3.5 right-3.5 mt-2 p-4 rounded-2xl bg-[#050B14]/95 border border-[#D4AF37]/40 shadow-[0_16px_40px_rgba(0,0,0,0.95)] backdrop-blur-2xl flex flex-col gap-3 z-40 text-white"
+                >
+                  <div className="flex items-center justify-between text-xs pb-2 border-b border-white/10">
+                    <div className="flex items-center gap-2">
+                      <span className="w-2 h-2 rounded-full bg-[#D4AF37] animate-pulse" />
+                      <span className="font-serif text-[#D4AF37] font-semibold text-sm">Volumen de Música</span>
+                    </div>
+                    <span className="font-mono text-xs text-[#D4AF37] font-bold px-2 py-0.5 rounded-md bg-white/5 border border-white/10">
+                      {Math.round((isMuted ? 0 : musicVolume) * 100)}%
+                    </span>
+                  </div>
 
-            {/* Central "Iniciar Lectura" Radiant Button */}
-            <button
-              onClick={handleStart}
-              className="flex-1 h-13 rounded-2xl bg-gradient-to-r from-[#D4AF37] via-[#F3E5AB] to-[#D4AF37] text-[#050B14] font-semibold flex items-center justify-center gap-2.5 shadow-[0_0_25px_rgba(212,175,55,0.4)] active:scale-[0.98] transition-transform"
-            >
-              <Play size={18} className="fill-[#050B14]" />
-              <span className="text-sm uppercase tracking-widest font-sans font-bold">
-                Iniciar Lectura
-              </span>
-            </button>
+                  <div className="flex items-center gap-3.5 py-1">
+                    <button
+                      onClick={toggleMute}
+                      className="p-1.5 rounded-lg hover:bg-white/5 text-[#D4AF37] active:scale-95 transition-transform"
+                      title={isMuted ? "Reactivar sonido" : "Silenciar"}
+                    >
+                      {getVolumeIcon(musicVolume, isMuted, 20)}
+                    </button>
 
-            {/* Next Arcana Button */}
-            <button
-              onClick={() => {
-                const next = (currentIndex + 1) % poems.length;
-                setSelectedPoemId(poems[next].id);
-              }}
-              className="w-12 h-12 rounded-2xl border border-white/10 bg-[#050B14]/80 backdrop-blur-xl text-gray-300 flex items-center justify-center active:scale-95 transition-transform"
-              aria-label="Arcano siguiente"
-            >
-              <ChevronRight size={22} />
-            </button>
+                    <input
+                      type="range"
+                      min="0"
+                      max="1"
+                      step="0.01"
+                      value={isMuted ? 0 : musicVolume}
+                      onChange={(e) => handleVolumeChange(parseFloat(e.target.value))}
+                      className="flex-1 h-2 bg-white/20 rounded-lg appearance-none cursor-pointer accent-[#D4AF37]"
+                    />
+                  </div>
+
+                  <div className="flex items-center justify-between pt-2 border-t border-white/10 text-xs">
+                    <label className="text-[#D4AF37] hover:underline font-sans cursor-pointer flex items-center gap-1.5 active:scale-95">
+                      <Upload size={13} />
+                      <span className="text-[11px]">Cambiar música</span>
+                      <input 
+                        type="file" 
+                        accept="audio/*" 
+                        className="hidden" 
+                        onChange={handleAudioUpload}
+                      />
+                    </label>
+                    
+                    <div className="flex items-center gap-2.5">
+                      <button
+                        onClick={toggleAudio}
+                        className="px-2.5 py-1 rounded-lg border border-[#D4AF37]/40 bg-[#D4AF37]/15 text-[#D4AF37] text-[11px] font-sans font-medium active:scale-95"
+                      >
+                        {isAudioPlaying ? "Pausar" : "Reanudar"}
+                      </button>
+                      <button
+                        onClick={() => setShowMobileVolumeSlider(false)}
+                        className="text-gray-300 hover:text-white px-2.5 py-1 rounded-lg bg-white/10 text-[11px] font-sans active:scale-95"
+                      >
+                        Listo
+                      </button>
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </motion.div>
         )}
       </AnimatePresence>
@@ -833,6 +980,80 @@ export default function App() {
                   );
                 })}
               </div>
+
+              {/* Mobile Drawer Audio & Settings Footer */}
+              <div className="pt-4 mt-3 border-t border-white/10 flex flex-col gap-3 shrink-0">
+                {/* Audio Card */}
+                <div className="p-3.5 rounded-2xl bg-white/[0.03] border border-white/10 flex flex-col gap-2.5">
+                  <div className="flex items-center justify-between text-xs text-gray-300">
+                    <label className="flex items-center gap-2 cursor-pointer hover:text-[#D4AF37] transition-colors py-0.5">
+                      <Upload size={15} className="text-[#D4AF37]" />
+                      <span className="font-sans font-medium">{audioSrc ? "Cambiar Música" : "Cargar Música (.mp3)"}</span>
+                      <input 
+                        type="file" 
+                        accept="audio/*" 
+                        className="hidden" 
+                        onChange={handleAudioUpload}
+                      />
+                    </label>
+
+                    {audioSrc && (
+                      <button
+                        onClick={toggleAudio}
+                        className="px-3 py-1 rounded-xl text-xs font-sans font-semibold border border-[#D4AF37]/50 bg-[#D4AF37]/15 text-[#D4AF37] hover:bg-[#D4AF37]/25 active:scale-95 transition-all"
+                      >
+                        {isAudioPlaying ? "Pausar" : "Reproducir"}
+                      </button>
+                    )}
+                  </div>
+
+                  {audioSrc && (
+                    <div className="flex items-center gap-3 pt-1 border-t border-white/5">
+                      <button
+                        onClick={toggleMute}
+                        className="p-1 text-[#D4AF37] hover:opacity-80 active:scale-95 transition-transform"
+                        title={isMuted ? "Reactivar sonido" : "Silenciar"}
+                      >
+                        {getVolumeIcon(musicVolume, isMuted, 18)}
+                      </button>
+                      <input
+                        type="range"
+                        min="0"
+                        max="1"
+                        step="0.01"
+                        value={isMuted ? 0 : musicVolume}
+                        onChange={(e) => handleVolumeChange(parseFloat(e.target.value))}
+                        className="flex-1 h-2 bg-white/20 rounded-lg appearance-none cursor-pointer accent-[#D4AF37]"
+                      />
+                      <span className="text-[11px] font-mono text-[#D4AF37] w-9 text-right font-bold">
+                        {Math.round((isMuted ? 0 : musicVolume) * 100)}%
+                      </span>
+                    </div>
+                  )}
+                </div>
+
+                {/* Voice Selection Card */}
+                <div className="p-3 rounded-2xl bg-white/[0.03] border border-white/10 flex items-center justify-between text-xs text-gray-300">
+                  <div className="flex items-center gap-2.5 truncate">
+                    <div className="w-7 h-7 rounded-lg bg-[#D4AF37]/15 border border-[#D4AF37]/30 flex items-center justify-center shrink-0">
+                      <Mic size={14} className="text-[#D4AF37]" />
+                    </div>
+                    <div className="truncate">
+                      <span className="text-[10px] text-gray-400 font-sans block leading-none mb-0.5">Voz del Narrador:</span>
+                      <span className="font-serif text-[#D4AF37] truncate font-medium">{activeVoiceName}</span>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => {
+                      setIsMobileDrawerOpen(false);
+                      setIsVoiceModalOpen(true);
+                    }}
+                    className="px-3 py-1.5 rounded-xl border border-[#D4AF37]/40 bg-[#D4AF37]/10 text-[#D4AF37] font-sans font-semibold text-xs shrink-0 ml-2 active:scale-95 hover:bg-[#D4AF37]/20 transition-all"
+                  >
+                    Cambiar
+                  </button>
+                </div>
+              </div>
             </motion.div>
           </div>
         )}
@@ -861,62 +1082,66 @@ export default function App() {
       {/* ======================================================== */}
       <AnimatePresence>
         {isInscriptionModalOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="fixed inset-0 z-50 flex flex-col justify-end md:justify-center md:items-center p-0 md:p-4">
             {/* Backdrop */}
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setIsInscriptionModalOpen(false)}
-              className="absolute inset-0 bg-black/75 backdrop-blur-md"
+              className="absolute inset-0 bg-black/80 backdrop-blur-md"
             />
 
-            {/* Modal Dialog */}
+            {/* Modal Dialog / Android Bottom Sheet Continuum */}
             <motion.div
-              initial={{ opacity: 0, scale: 0.92, y: 20 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.92, y: 20 }}
-              transition={{ duration: 0.35, ease: "easeOut" }}
-              className="relative w-full max-w-lg rounded-3xl bg-[#050B14]/95 border border-[#D4AF37]/50 p-6 md:p-8 shadow-[0_0_60px_rgba(212,175,55,0.3)] backdrop-blur-2xl text-white overflow-hidden z-10"
+              initial={{ opacity: 0, y: 40 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 40 }}
+              transition={{ duration: 0.3, ease: "easeOut" }}
+              className="relative w-full md:max-w-lg max-h-[85vh] flex flex-col rounded-t-[28px] md:rounded-3xl bg-[#050B14]/95 border-t md:border border-[#D4AF37]/50 p-5 sm:p-6 md:p-8 shadow-[0_-10px_40px_rgba(0,0,0,0.85)] md:shadow-[0_0_60px_rgba(212,175,55,0.3)] backdrop-blur-2xl text-white overflow-hidden z-10"
             >
               {/* Radiant Atmosphere Light */}
               <div className="absolute -top-24 -right-24 w-60 h-60 rounded-full bg-[#D4AF37]/15 blur-3xl pointer-events-none" />
               <div className="absolute -bottom-24 -left-24 w-60 h-60 rounded-full bg-[#00E5FF]/10 blur-3xl pointer-events-none" />
 
-              {/* Close Button */}
-              <button
-                onClick={() => setIsInscriptionModalOpen(false)}
-                className="absolute top-5 right-5 p-2 rounded-full border border-white/10 bg-white/5 text-gray-400 hover:text-[#D4AF37] hover:bg-white/10 transition-colors"
-                aria-label="Cerrar modal"
-              >
-                <X size={18} />
-              </button>
+              {/* Android Drag Handle Indicator */}
+              <div className="w-12 h-1 bg-white/25 rounded-full mx-auto mb-3 md:hidden shrink-0" />
 
-              {/* Modal Header */}
-              <div className="flex items-center gap-3.5 mb-5 pr-8">
-                <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-[#D4AF37] via-[#F5D77F] to-[#8C6D1F] flex items-center justify-center text-[#050B14] shadow-[0_0_18px_rgba(212,175,55,0.45)] shrink-0">
-                  <Compass size={22} />
+              {/* Modal Header (Non-colliding flex layout) */}
+              <div className="flex items-start justify-between gap-3 pb-3 mb-3 border-b border-white/10 shrink-0">
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="w-10 h-10 md:w-11 md:h-11 rounded-2xl bg-gradient-to-br from-[#D4AF37] via-[#F5D77F] to-[#8C6D1F] flex items-center justify-center text-[#050B14] shadow-[0_0_18px_rgba(212,175,55,0.45)] shrink-0">
+                    <Compass size={20} className="md:w-[22px] md:h-[22px]" />
+                  </div>
+                  <div className="min-w-0">
+                    <span className="block text-[10px] md:text-[11px] uppercase tracking-widest text-[#D4AF37]/80 font-sans font-bold truncate">
+                      El Círculo Sagrado del Fondo
+                    </span>
+                    <h3 className="text-lg md:text-xl font-serif text-[#D4AF37] font-medium leading-snug line-clamp-2">
+                      {currentInscription.themeTitle}
+                    </h3>
+                  </div>
                 </div>
-                <div>
-                  <span className="text-[11px] uppercase tracking-widest text-[#D4AF37]/80 font-sans font-bold">
-                    El Círculo Sagrado del Fondo
-                  </span>
-                  <h3 className="text-xl font-serif text-[#D4AF37] font-medium leading-snug">
-                    {currentInscription.themeTitle}
-                  </h3>
-                </div>
+
+                <button
+                  onClick={() => setIsInscriptionModalOpen(false)}
+                  className="p-2 -mr-1 rounded-full border border-white/10 bg-white/5 text-gray-400 hover:text-[#D4AF37] hover:bg-white/10 active:scale-95 transition-all shrink-0"
+                  aria-label="Cerrar modal"
+                >
+                  <X size={18} />
+                </button>
               </div>
 
-              {/* Inscriptions Content */}
-              <div className="space-y-4 my-5">
+              {/* Inscriptions Content (Scrollable for mobile/Android screens) */}
+              <div className="flex-1 overflow-y-auto custom-scrollbar space-y-3 sm:space-y-4 pr-1 -mr-1 my-1">
                 {/* Anillo Exterior */}
-                <div className="p-4 rounded-2xl bg-white/[0.03] border border-[#D4AF37]/20">
+                <div className="p-3.5 sm:p-4 rounded-xl sm:rounded-2xl bg-white/[0.03] border border-[#D4AF37]/20">
                   <div className="flex items-center justify-between mb-1.5">
                     <span className="text-[10px] uppercase font-mono tracking-widest text-[#00E5FF]">
                       Anillo Exterior (Latín)
                     </span>
                   </div>
-                  <p className="font-serif italic text-amber-100 text-sm md:text-base leading-relaxed mb-2 tracking-wide">
+                  <p className="font-serif italic text-amber-100 text-sm sm:text-base leading-relaxed mb-2 tracking-wide">
                     {currentInscription.outerLatin}
                   </p>
                   <p className="text-xs text-gray-300 leading-relaxed font-sans font-light">
@@ -926,13 +1151,13 @@ export default function App() {
                 </div>
 
                 {/* Anillo Interior */}
-                <div className="p-4 rounded-2xl bg-white/[0.03] border border-[#D4AF37]/20">
+                <div className="p-3.5 sm:p-4 rounded-xl sm:rounded-2xl bg-white/[0.03] border border-[#D4AF37]/20">
                   <div className="flex items-center justify-between mb-1.5">
                     <span className="text-[10px] uppercase font-mono tracking-widest text-[#D4AF37]">
                       Anillo Interior (Latín)
                     </span>
                   </div>
-                  <p className="font-serif italic text-amber-200/90 text-sm md:text-base leading-relaxed mb-2 tracking-wide">
+                  <p className="font-serif italic text-amber-200/90 text-sm sm:text-base leading-relaxed mb-2 tracking-wide">
                     {currentInscription.innerLatin}
                   </p>
                   <p className="text-xs text-gray-300 leading-relaxed font-sans font-light">
@@ -942,7 +1167,7 @@ export default function App() {
                 </div>
 
                 {/* Orígenes / Fuente */}
-                <div className="px-1 text-[11px] text-gray-400 font-serif flex items-center gap-1.5">
+                <div className="px-1 text-[11px] text-gray-400 font-serif flex flex-wrap items-center gap-1.5 pt-1">
                   <span className="text-[#D4AF37]/80 font-semibold font-sans uppercase tracking-wider text-[10px]">
                     Fuente:
                   </span>
@@ -950,22 +1175,42 @@ export default function App() {
                 </div>
               </div>
 
-              {/* Modal Actions */}
-              <div className="flex items-center justify-between pt-4 border-t border-white/10 mt-6 gap-3">
+              {/* Modal Actions Footer */}
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between pt-3 sm:pt-4 border-t border-white/10 gap-2.5 sm:gap-3 shrink-0">
                 <button
                   onClick={handleNextInscription}
-                  className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-[#D4AF37]/50 bg-[#D4AF37]/15 hover:bg-[#D4AF37]/25 text-[#D4AF37] text-xs font-sans font-semibold tracking-wider transition-colors active:scale-95"
+                  className="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border border-[#D4AF37]/50 bg-[#D4AF37]/15 hover:bg-[#D4AF37]/25 text-[#D4AF37] text-xs font-sans font-semibold tracking-wider transition-colors active:scale-95 shadow-[0_0_15px_rgba(212,175,55,0.15)]"
                 >
-                  <RotateCw size={14} />
+                  <RotateCw size={14} className="shrink-0" />
                   <span>Girar Círculo (Siguiente)</span>
                 </button>
 
-                <p className="text-[11px] text-gray-400 font-sans text-right max-w-[210px] leading-tight">
+                <p className="text-[10px] sm:text-[11px] text-gray-400 font-sans text-center sm:text-right leading-tight">
                   Cambia automáticamente cada vez que abres la aplicación.
                 </p>
               </div>
             </motion.div>
           </div>
+        )}
+      </AnimatePresence>
+
+      {/* ======================================================== */}
+      {/* --- MD4 MODAL: SELECTOR DE VOZ DEL ORÁCULO --- */}
+      {/* ======================================================== */}
+      <AnimatePresence>
+        {isVoiceModalOpen && (
+          <VoiceSelectorModal
+            isOpen={isVoiceModalOpen}
+            onClose={() => setIsVoiceModalOpen(false)}
+            voices={voices}
+            selectedVoiceURI={selectedVoiceURI}
+            onSelectVoice={setSelectedVoiceURI}
+            speechRate={speechRate}
+            onSpeechRateChange={setSpeechRate}
+            speechPitch={speechPitch}
+            onSpeechPitchChange={setSpeechPitch}
+            onPreviewVoice={previewVoice}
+          />
         )}
       </AnimatePresence>
 
@@ -981,6 +1226,18 @@ export default function App() {
         currentWordIndex={currentWordIndex}
         onFinish={() => setTheaterMode(false)}
         onSkip={skip}
+        onStart={handleStart}
+        onPrev={() => {
+          const prev = (currentIndex - 1 + poems.length) % poems.length;
+          setSelectedPoemId(poems[prev].id);
+        }}
+        onNext={() => {
+          const next = (currentIndex + 1) % poems.length;
+          setSelectedPoemId(poems[next].id);
+        }}
+        onOpenVoiceModal={() => setIsVoiceModalOpen(true)}
+        onOpenInscriptionModal={() => setIsInscriptionModalOpen(true)}
+        activeVoiceName={activeVoiceName}
       />
     </div>
   );

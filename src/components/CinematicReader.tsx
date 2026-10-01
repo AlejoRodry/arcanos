@@ -2,7 +2,7 @@ import React from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Poem } from '../types';
 import { SpeechStage } from '../hooks/useSpeech';
-import { Sparkles, Compass } from 'lucide-react';
+import { Sparkles, Compass, Play, ChevronLeft, ChevronRight, Mic, Info } from 'lucide-react';
 
 interface CinematicReaderProps {
   poem: Poem;
@@ -13,6 +13,12 @@ interface CinematicReaderProps {
   currentWordIndex: number;
   onFinish: () => void;
   onSkip?: () => void;
+  onStart?: () => void;
+  onPrev?: () => void;
+  onNext?: () => void;
+  onOpenVoiceModal?: () => void;
+  onOpenInscriptionModal?: () => void;
+  activeVoiceName?: string;
 }
 
 export const CinematicReader: React.FC<CinematicReaderProps> = ({
@@ -22,14 +28,20 @@ export const CinematicReader: React.FC<CinematicReaderProps> = ({
   speechStage,
   currentLineIndex,
   currentWordIndex,
-  onSkip
+  onSkip,
+  onStart,
+  onPrev,
+  onNext,
+  onOpenVoiceModal,
+  onOpenInscriptionModal,
+  activeVoiceName
 }) => {
   return (
     <div
       onClick={onSkip}
       className={`absolute inset-0 flex flex-col items-center justify-center p-4 md:p-12 z-10 select-none transition-all duration-1000 ${
         !theaterMode 
-          ? 'md:pl-[440px] pointer-events-none pb-28 md:pb-12' 
+          ? 'md:pl-[440px] pointer-events-none pt-14 md:pt-0' 
           : 'pl-0 cursor-pointer pointer-events-auto pb-8 md:pb-12'
       }`}
     >
@@ -45,34 +57,91 @@ export const CinematicReader: React.FC<CinematicReaderProps> = ({
             className="text-center w-full max-w-sm sm:max-w-xl md:max-w-3xl flex flex-col items-center px-2"
           >
             {/* ARCANA TITLE & SUBTITLE (ARRIBA) */}
-            <h1 className="text-4xl sm:text-5xl md:text-7xl font-serif text-[#D4AF37] mb-2 md:mb-3 tracking-widest drop-shadow-[0_0_25px_rgba(212,175,55,0.45)]">
+            <h1 className="text-3xl sm:text-5xl md:text-7xl font-serif text-[#D4AF37] mb-1.5 md:mb-3 tracking-widest drop-shadow-[0_0_25px_rgba(212,175,55,0.45)]">
               {poem.title}
             </h1>
-            <p className="text-base sm:text-lg md:text-2xl text-gray-300 font-serif italic tracking-wide mb-6 md:mb-8">
+            <p className="text-sm sm:text-base md:text-2xl text-gray-300 font-serif italic tracking-wide mb-3 md:mb-8">
               {poem.subtitle}
             </p>
 
             {/* Radiant Divider */}
-            <div className="w-32 md:w-48 h-[1px] bg-gradient-to-r from-transparent via-[#D4AF37]/50 to-transparent mb-6 md:mb-8" />
+            <div className="w-28 md:w-48 h-[1px] bg-gradient-to-r from-transparent via-[#D4AF37]/50 to-transparent mb-3 md:mb-8" />
 
-            {/* MD4 Stencil Container: Squircle with 3-point Gradient & Cutout Icon (ABAJO) */}
-            <div className="relative mb-4 group">
-              <div className="w-13 h-13 md:w-15 md:h-15 rounded-[18px] md:rounded-[20px] bg-gradient-to-tr from-[#D4AF37] via-[#F3E5AB] to-[#996515] p-[1.5px] shadow-[0_0_25px_rgba(212,175,55,0.3)] flex items-center justify-center">
-                <div className="w-full h-full rounded-[17px] md:rounded-[19px] bg-[#050B14]/85 backdrop-blur-md flex items-center justify-center">
-                  <Sparkles className="w-6 h-6 md:w-7 md:h-7 text-[#D4AF37] drop-shadow-[0_0_8px_rgba(212,175,55,0.8)]" />
+            {/* MD4 Stencil Container: Squircle with 3-point Gradient & Cutout Icon */}
+            <div className="relative mb-3 md:mb-4 group">
+              <div className="w-11 h-11 md:w-15 md:h-15 rounded-[16px] md:rounded-[20px] bg-gradient-to-tr from-[#D4AF37] via-[#F3E5AB] to-[#996515] p-[1.5px] shadow-[0_0_25px_rgba(212,175,55,0.3)] flex items-center justify-center">
+                <div className="w-full h-full rounded-[15px] md:rounded-[19px] bg-[#050B14]/85 backdrop-blur-md flex items-center justify-center">
+                  <Sparkles className="w-5 h-5 md:w-7 md:h-7 text-[#D4AF37] drop-shadow-[0_0_8px_rgba(212,175,55,0.8)]" />
                 </div>
               </div>
               <div className="absolute inset-0 rounded-[20px] bg-[#D4AF37]/20 blur-xl -z-10 group-hover:scale-125 transition-transform duration-700" />
             </div>
 
-            {/* VISUAL HOOK (PREGUNTA DEL UMBRAL - ABAJO) */}
-            <div className="relative mb-6 px-5 md:px-7 py-4 md:py-5 rounded-2xl bg-white/[0.04] backdrop-blur-md border border-[#D4AF37]/25 shadow-[0_8px_32px_rgba(0,0,0,0.5)] w-full max-w-xl">
-              <div className="text-[10px] md:text-[11px] font-mono tracking-[0.25em] text-[#D4AF37]/80 uppercase mb-2">
+            {/* VISUAL HOOK (PREGUNTA DEL UMBRAL) */}
+            <div className="relative mb-4 sm:mb-5 px-4 sm:px-6 md:px-7 py-3 sm:py-4 md:py-5 rounded-2xl bg-white/[0.04] backdrop-blur-md border border-[#D4AF37]/25 shadow-[0_8px_32px_rgba(0,0,0,0.5)] w-full max-w-xl">
+              <div className="text-[10px] md:text-[11px] font-mono tracking-[0.25em] text-[#D4AF37]/80 uppercase mb-1.5 sm:mb-2">
                 // Pregunta del Umbral
               </div>
-              <p className="text-base sm:text-xl md:text-2xl text-amber-100/95 font-serif italic leading-relaxed tracking-wide">
+              <p className="text-sm sm:text-lg md:text-2xl text-amber-100/95 font-serif italic leading-relaxed tracking-wide">
                 &ldquo;{poem.hook}&rdquo;
               </p>
+            </div>
+
+            {/* ANDROID / MOBILE MAIN ACTIONS (COLOCADAS MÁS ARRIBA, DIRECTO EN PANTALLA) */}
+            <div className="md:hidden w-full max-w-xs sm:max-w-sm flex flex-col items-center gap-2.5 pointer-events-auto mt-1 mb-2">
+              {/* Action Buttons Row */}
+              <div className="w-full flex items-center justify-between gap-2.5 sm:gap-3">
+                <button
+                  onClick={onPrev}
+                  className="w-12 h-12 rounded-2xl border border-white/15 bg-[#050B14]/90 backdrop-blur-xl text-gray-200 hover:text-[#D4AF37] hover:border-[#D4AF37]/50 flex items-center justify-center active:scale-95 transition-all shadow-[0_4px_16px_rgba(0,0,0,0.5)] shrink-0"
+                  title="Arcano anterior"
+                >
+                  <ChevronLeft size={22} />
+                </button>
+
+                <button
+                  onClick={onStart}
+                  className="flex-1 h-12 rounded-2xl bg-gradient-to-r from-[#D4AF37] via-[#F3E5AB] to-[#D4AF37] text-[#050B14] font-bold flex items-center justify-center gap-2 shadow-[0_0_25px_rgba(212,175,55,0.4)] active:scale-[0.98] transition-transform"
+                >
+                  <Play size={17} className="fill-[#050B14]" />
+                  <span className="text-xs sm:text-sm uppercase tracking-widest font-sans font-bold">
+                    Iniciar Lectura
+                  </span>
+                </button>
+
+                <button
+                  onClick={onNext}
+                  className="w-12 h-12 rounded-2xl border border-white/15 bg-[#050B14]/90 backdrop-blur-xl text-gray-200 hover:text-[#D4AF37] hover:border-[#D4AF37]/50 flex items-center justify-center active:scale-95 transition-all shadow-[0_4px_16px_rgba(0,0,0,0.5)] shrink-0"
+                  title="Arcano siguiente"
+                >
+                  <ChevronRight size={22} />
+                </button>
+              </div>
+
+              {/* Quick Options Pills Row (Voz & Círculo Sagrado) */}
+              <div className="flex items-center justify-center gap-2 w-full pt-1">
+                {onOpenVoiceModal && (
+                  <button
+                    onClick={onOpenVoiceModal}
+                    className="flex-1 flex items-center justify-center gap-1.5 py-2 px-2.5 rounded-xl bg-white/[0.04] border border-white/10 hover:border-[#D4AF37]/40 hover:bg-[#D4AF37]/10 text-xs text-gray-300 hover:text-[#D4AF37] active:scale-95 transition-all shadow-sm"
+                    title="Configurar voz del narrador"
+                  >
+                    <Mic size={13} className="text-[#D4AF37] shrink-0" />
+                    <span className="text-[11px] font-sans truncate">{activeVoiceName || "Voz"}</span>
+                  </button>
+                )}
+
+                {onOpenInscriptionModal && (
+                  <button
+                    onClick={onOpenInscriptionModal}
+                    className="flex-1 flex items-center justify-center gap-1.5 py-2 px-2.5 rounded-xl bg-white/[0.04] border border-white/10 hover:border-[#D4AF37]/40 hover:bg-[#D4AF37]/10 text-xs text-gray-300 hover:text-[#D4AF37] active:scale-95 transition-all shadow-sm"
+                    title="Ver sentencia del círculo sagrado"
+                  >
+                    <Info size={13} className="text-[#D4AF37] shrink-0" />
+                    <span className="text-[11px] font-sans truncate">Círculo Sagrado</span>
+                  </button>
+                )}
+              </div>
             </div>
 
             {/* Keyboard hints (Desktop Only) */}

@@ -601,15 +601,6 @@ export default function App() {
                 </h1>
                 
                 <div className="flex items-center gap-2.5">
-                  {/* Selector de Voz Modal Trigger */}
-                  <button
-                    onClick={() => setIsVoiceModalOpen(true)}
-                    className="w-10 h-10 flex items-center justify-center text-[#D4AF37]/80 hover:text-[#D4AF37] transition-all rounded-xl bg-white/[0.03] hover:bg-[#D4AF37]/15 border border-white/10 hover:border-[#D4AF37]/40 active:scale-95 group relative shadow-sm"
-                    title="Elegir voz del narrador"
-                  >
-                    <Mic size={18} />
-                  </button>
-
                   {/* Sentencia del Círculo Modal Trigger */}
                   <button
                     onClick={() => setIsInscriptionModalOpen(true)}
@@ -668,24 +659,7 @@ export default function App() {
             </div>
 
             <div>
-              {/* Active Voice Pill Selector */}
-              <button
-                onClick={() => setIsVoiceModalOpen(true)}
-                className="w-full mb-3 flex items-center justify-between px-3.5 py-2.5 rounded-xl bg-white/[0.03] border border-white/10 hover:border-[#D4AF37]/40 text-xs text-gray-300 transition-all group"
-                title="Configurar voz y afinación de la lectura"
-              >
-                <div className="flex items-center gap-2 min-w-0">
-                  <Mic size={14} className="text-[#D4AF37] shrink-0" />
-                  <span className="text-[11px] text-gray-400 font-sans">Voz:</span>
-                  <span className="font-serif text-[#D4AF37] truncate font-medium">
-                    {activeVoiceName}
-                  </span>
-                </div>
-                <span className="text-[10px] text-[#D4AF37] group-hover:underline shrink-0 font-sans">
-                  Cambiar
-                </span>
-              </button>
-
+              {/* Primary Action Button */}
               <button
                 onClick={handleStart}
                 className="w-full group relative inline-flex flex-shrink-0 items-center justify-center gap-3 px-6 py-4 bg-transparent overflow-hidden text-[#D4AF37] border border-[#D4AF37]/40 hover:border-[#D4AF37] rounded-xl transition-all duration-500 ease-out shadow-[0_0_25px_rgba(212,175,55,0.15)]"
@@ -697,59 +671,42 @@ export default function App() {
                 </span>
               </button>
 
-              {/* Desktop Audio Controls with MD4 Volume Continuum */}
-              <div className="mt-5 p-3 rounded-2xl bg-white/[0.03] border border-white/10 space-y-2.5">
-                <div className="flex items-center justify-between text-xs text-gray-400">
-                  <label className="flex items-center gap-2 cursor-pointer hover:text-[#D4AF37] transition-colors group">
-                    <Upload size={14} className="group-hover:-translate-y-0.5 transition-transform" />
-                    <span className="tracking-wider">
-                      {audioSrc ? "Cambiar Música" : "Subir Música (.mp3)"}
-                    </span>
-                    <input 
-                      type="file" 
-                      accept="audio/*" 
-                      className="hidden" 
-                      onChange={handleAudioUpload}
-                    />
-                  </label>
-
-                  {audioSrc && (
-                    <button 
-                      onClick={toggleAudio}
-                      className="px-2 py-0.5 rounded text-[11px] font-sans border border-[#D4AF37]/30 text-[#D4AF37] hover:bg-[#D4AF37]/15 transition-all"
-                    >
-                      {isAudioPlaying ? "Pausar" : "Reproducir"}
-                    </button>
-                  )}
+              {/* Botón Unificado de Audio & Voz */}
+              <button
+                onClick={() => setIsVoiceModalOpen(true)}
+                className="w-full mt-3.5 flex items-center justify-between p-3.5 rounded-2xl bg-white/[0.03] hover:bg-white/[0.06] border border-white/10 hover:border-[#D4AF37]/50 transition-all duration-300 group shadow-sm active:scale-[0.99] cursor-pointer"
+                title="Configurar voz del narrador y música de fondo"
+              >
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-[#D4AF37]/20 via-[#D4AF37]/10 to-transparent border border-[#D4AF37]/30 flex items-center justify-center text-[#D4AF37] shrink-0 group-hover:scale-105 transition-transform">
+                    <Volume2 size={16} />
+                  </div>
+                  <div className="text-left min-w-0">
+                    <div className="flex items-center gap-2">
+                      <span className="font-serif text-xs font-semibold text-[#D4AF37] tracking-wider uppercase">
+                        Voz & Música
+                      </span>
+                      {audioSrc && (
+                        <span className="w-1.5 h-1.5 rounded-full bg-[#D4AF37] animate-pulse" />
+                      )}
+                    </div>
+                    <div className="flex items-center gap-1.5 text-[11px] text-gray-400 truncate font-serif mt-0.5">
+                      <span className="truncate">{activeVoiceName}</span>
+                      <span className="opacity-40">•</span>
+                      <span className="shrink-0 text-gray-400">
+                        {audioSrc ? (isAudioPlaying ? 'Música activa' : 'Música en pausa') : 'Subir música'}
+                      </span>
+                    </div>
+                  </div>
                 </div>
 
-                {audioSrc && (
-                  <div className="pt-2 border-t border-white/5 flex items-center gap-2.5">
-                    <button
-                      onClick={toggleMute}
-                      className="text-[#D4AF37] hover:opacity-80 active:scale-95 transition-all"
-                      title={isMuted ? "Reactivar sonido" : "Silenciar música"}
-                    >
-                      {getVolumeIcon(musicVolume, isMuted, 16)}
-                    </button>
-
-                    <input
-                      type="range"
-                      min="0"
-                      max="1"
-                      step="0.01"
-                      value={isMuted ? 0 : musicVolume}
-                      onChange={(e) => handleVolumeChange(parseFloat(e.target.value))}
-                      className="flex-1 h-1.5 bg-white/15 rounded-lg appearance-none cursor-pointer accent-[#D4AF37]"
-                      title={`Volumen: ${Math.round((isMuted ? 0 : musicVolume) * 100)}%`}
-                    />
-
-                    <span className="text-[10px] font-mono text-[#D4AF37] w-8 text-right font-medium">
-                      {Math.round((isMuted ? 0 : musicVolume) * 100)}%
-                    </span>
-                  </div>
-                )}
-              </div>
+                <div className="flex items-center gap-1.5 shrink-0 ml-2">
+                  <span className="text-[11px] font-serif text-[#D4AF37] group-hover:underline">
+                    Ajustar
+                  </span>
+                  <ChevronRight size={14} className="text-[#D4AF37]/60 group-hover:translate-x-0.5 transition-transform" />
+                </div>
+              </button>
 
               {/* PWA Install Button for Desktop */}
               <div className="mt-3">
@@ -771,15 +728,16 @@ export default function App() {
             exit={{ opacity: 0, y: -20 }}
             className="md:hidden absolute top-0 left-0 right-0 z-30 px-3.5 sm:px-5 py-2.5 sm:py-3 flex items-center justify-between border-b border-white/10 bg-[#02060F]/90 backdrop-blur-2xl shadow-[0_4px_20px_rgba(0,0,0,0.5)]"
           >
-            {/* Brand and Arcana index indicator */}
+            {/* Brand, Arcana index indicator and PWA Install Badge */}
             <div className="flex items-center gap-2 shrink-0">
               <span className="w-2 h-2 rounded-full bg-[#D4AF37] shadow-[0_0_10px_#D4AF37]" />
               <h1 className="text-sm sm:text-base font-serif text-[#D4AF37] tracking-wider uppercase font-semibold">
                 Arcanos
               </h1>
-              <span className="text-[10px] font-mono text-gray-400 px-2 py-0.5 rounded-full bg-white/5 border border-white/10">
+              <span className="text-[10px] font-mono text-gray-400 px-2 py-0.5 rounded-full bg-white/5 border border-white/10 hidden sm:inline-block">
                 {currentIndex + 1}/{poems.length}
               </span>
+              <PWAInstallButton variant="topbar" />
             </div>
 
             {/* Quick Actions (Spacious MD4 Top Bar - No overcrowding) */}
@@ -993,76 +951,45 @@ export default function App() {
 
               {/* Mobile Drawer Audio & Settings Footer */}
               <div className="pt-4 mt-3 border-t border-white/10 flex flex-col gap-3 shrink-0">
-                {/* Audio Card */}
-                <div className="p-3.5 rounded-2xl bg-white/[0.03] border border-white/10 flex flex-col gap-2.5">
-                  <div className="flex items-center justify-between text-xs text-gray-300">
-                    <label className="flex items-center gap-2 cursor-pointer hover:text-[#D4AF37] transition-colors py-0.5">
-                      <Upload size={15} className="text-[#D4AF37]" />
-                      <span className="font-sans font-medium">{audioSrc ? "Cambiar Música" : "Cargar Música (.mp3)"}</span>
-                      <input 
-                        type="file" 
-                        accept="audio/*" 
-                        className="hidden" 
-                        onChange={handleAudioUpload}
-                      />
-                    </label>
-
-                    {audioSrc && (
-                      <button
-                        onClick={toggleAudio}
-                        className="px-3 py-1 rounded-xl text-xs font-sans font-semibold border border-[#D4AF37]/50 bg-[#D4AF37]/15 text-[#D4AF37] hover:bg-[#D4AF37]/25 active:scale-95 transition-all"
-                      >
-                        {isAudioPlaying ? "Pausar" : "Reproducir"}
-                      </button>
-                    )}
-                  </div>
-
-                  {audioSrc && (
-                    <div className="flex items-center gap-3 pt-1 border-t border-white/5">
-                      <button
-                        onClick={toggleMute}
-                        className="p-1 text-[#D4AF37] hover:opacity-80 active:scale-95 transition-transform"
-                        title={isMuted ? "Reactivar sonido" : "Silenciar"}
-                      >
-                        {getVolumeIcon(musicVolume, isMuted, 18)}
-                      </button>
-                      <input
-                        type="range"
-                        min="0"
-                        max="1"
-                        step="0.01"
-                        value={isMuted ? 0 : musicVolume}
-                        onChange={(e) => handleVolumeChange(parseFloat(e.target.value))}
-                        className="flex-1 h-2 bg-white/20 rounded-lg appearance-none cursor-pointer accent-[#D4AF37]"
-                      />
-                      <span className="text-[11px] font-mono text-[#D4AF37] w-9 text-right font-bold">
-                        {Math.round((isMuted ? 0 : musicVolume) * 100)}%
-                      </span>
+                {/* Botón Unificado de Audio & Voz */}
+                <button
+                  onClick={() => {
+                    setIsMobileDrawerOpen(false);
+                    setIsVoiceModalOpen(true);
+                  }}
+                  className="w-full flex items-center justify-between p-3.5 rounded-2xl bg-white/[0.03] hover:bg-white/[0.06] border border-white/10 hover:border-[#D4AF37]/50 transition-all duration-300 group shadow-sm active:scale-[0.99] cursor-pointer"
+                  title="Configurar voz del narrador y música de fondo"
+                >
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-[#D4AF37]/20 via-[#D4AF37]/10 to-transparent border border-[#D4AF37]/30 flex items-center justify-center text-[#D4AF37] shrink-0 group-hover:scale-105 transition-transform">
+                      <Volume2 size={16} />
                     </div>
-                  )}
-                </div>
-
-                {/* Voice Selection Card */}
-                <div className="p-3 rounded-2xl bg-white/[0.03] border border-white/10 flex items-center justify-between text-xs text-gray-300">
-                  <div className="flex items-center gap-2.5 truncate">
-                    <div className="w-7 h-7 rounded-lg bg-[#D4AF37]/15 border border-[#D4AF37]/30 flex items-center justify-center shrink-0">
-                      <Mic size={14} className="text-[#D4AF37]" />
-                    </div>
-                    <div className="truncate">
-                      <span className="text-[10px] text-gray-400 font-sans block leading-none mb-0.5">Voz del Narrador:</span>
-                      <span className="font-serif text-[#D4AF37] truncate font-medium">{activeVoiceName}</span>
+                    <div className="text-left min-w-0">
+                      <div className="flex items-center gap-2">
+                        <span className="font-serif text-xs font-semibold text-[#D4AF37] tracking-wider uppercase">
+                          Voz & Música
+                        </span>
+                        {audioSrc && (
+                          <span className="w-1.5 h-1.5 rounded-full bg-[#D4AF37] animate-pulse" />
+                        )}
+                      </div>
+                      <div className="flex items-center gap-1.5 text-[11px] text-gray-400 truncate font-serif mt-0.5">
+                        <span className="truncate">{activeVoiceName}</span>
+                        <span className="opacity-40">•</span>
+                        <span className="shrink-0 text-gray-400">
+                          {audioSrc ? (isAudioPlaying ? 'Música activa' : 'Música en pausa') : 'Subir música'}
+                        </span>
+                      </div>
                     </div>
                   </div>
-                  <button
-                    onClick={() => {
-                      setIsMobileDrawerOpen(false);
-                      setIsVoiceModalOpen(true);
-                    }}
-                    className="px-3 py-1.5 rounded-xl border border-[#D4AF37]/40 bg-[#D4AF37]/10 text-[#D4AF37] font-sans font-semibold text-xs shrink-0 ml-2 active:scale-95 hover:bg-[#D4AF37]/20 transition-all"
-                  >
-                    Cambiar
-                  </button>
-                </div>
+
+                  <div className="flex items-center gap-1.5 shrink-0 ml-2">
+                    <span className="text-[11px] font-serif text-[#D4AF37] group-hover:underline">
+                      Ajustar
+                    </span>
+                    <ChevronRight size={14} className="text-[#D4AF37]/60 group-hover:translate-x-0.5 transition-transform" />
+                  </div>
+                </button>
 
                 {/* PWA Install Button for Mobile */}
                 <PWAInstallButton variant="full" className="w-full mt-1" />
@@ -1223,6 +1150,14 @@ export default function App() {
             speechPitch={speechPitch}
             onSpeechPitchChange={setSpeechPitch}
             onPreviewVoice={previewVoice}
+            audioSrc={audioSrc}
+            onAudioUpload={handleAudioUpload}
+            isAudioPlaying={isAudioPlaying}
+            onToggleAudio={toggleAudio}
+            musicVolume={musicVolume}
+            onVolumeChange={handleVolumeChange}
+            isMuted={isMuted}
+            onToggleMute={toggleMute}
           />
         )}
       </AnimatePresence>

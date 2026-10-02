@@ -5,7 +5,53 @@ export type SpeechStage = 'idle' | 'hook' | 'title' | 'lines';
 
 let activeUtterance: SpeechSynthesisUtterance | null = null;
 
+// Intelligent Spanish Voice Scorer (Neural, Natural, Theatrical Narrator)
+export const findBestSpanishVoice = (voicesList: SpeechSynthesisVoice[]): SpeechSynthesisVoice | null => {
+  if (!voicesList || voicesList.length === 0) return null;
+
+  // Filter Spanish voices
+  const spanish = voicesList.filter(v => v.lang && v.lang.toLowerCase().startsWith('es'));
+  if (spanish.length === 0) return voicesList[0] || null;
+
+  // Scoring function: higher score = more natural, clear, resonant narrator
+  const scoreVoice = (v: SpeechSynthesisVoice): number => {
+    let score = 10;
+    const nameLower = v.name.toLowerCase();
+    const uriLower = (v.voiceURI || '').toLowerCase();
+    const langLower = v.lang.toLowerCase();
+
+    // High fidelity neural / natural voice tags
+    if (nameLower.includes('natural') || uriLower.includes('natural')) score += 60;
+    if (nameLower.includes('neural') || uriLower.includes('neural')) score += 60;
+    if (nameLower.includes('online') || uriLower.includes('online')) score += 35;
+    if (nameLower.includes('premium') || uriLower.includes('premium')) score += 40;
+    if (nameLower.includes('enhanced') || uriLower.includes('enhanced')) score += 45;
+    if (nameLower.includes('google') || uriLower.includes('google')) score += 25;
+
+    // Theatrical and expressive narrator personas
+    if (nameLower.includes('jorge') || nameLower.includes('alvaro')) score += 30;
+    if (nameLower.includes('helena') || nameLower.includes('laura')) score += 30;
+    if (nameLower.includes('sabina') || nameLower.includes('raul')) score += 25;
+    if (nameLower.includes('monica') || nameLower.includes('paulina')) score += 25;
+
+    // Android / Google Speech Services network neural models
+    if (uriLower.includes('network') || nameLower.includes('network')) score += 35;
+    if (langLower === 'es-es' || langLower.startsWith('es-es')) score += 20;
+    if (langLower.startsWith('es-mx') || langLower.startsWith('es-us')) score += 15;
+
+    // Demote robotic or low-sample local fallbacks
+    if (nameLower.includes('compact') || uriLower.includes('compact')) score -= 25;
+
+    return score;
+  };
+
+  const sorted = [...spanish].sort((a, b) => scoreVoice(b) - scoreVoice(a));
+  return sorted[0];
+};
+
 export const useSpeech = () => {
+  const isMobile = typeof navigator !== 'undefined' && /android|iphone|ipad|ipod/i.test(navigator.userAgent);
+
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [speechStage, setSpeechStage] = useState<SpeechStage>('idle');
   const [currentLineIndex, setCurrentLineIndex] = useState(-1);
@@ -14,13 +60,15 @@ export const useSpeech = () => {
   const [selectedVoiceURI, setSelectedVoiceURIState] = useState<string | null>(() => {
     return localStorage.getItem('radiant_selected_voice_uri');
   });
+  
+  // Adaptive acoustic defaults: Android Google TTS sounds distorted below 0.90, optimal at ~0.95
   const [speechRate, setSpeechRateState] = useState<number>(() => {
     const saved = localStorage.getItem('radiant_speech_rate');
-    return saved ? parseFloat(saved) : 0.85;
+    return saved ? parseFloat(saved) : 0.86;
   });
   const [speechPitch, setSpeechPitchState] = useState<number>(() => {
     const saved = localStorage.getItem('radiant_speech_pitch');
-    return saved ? parseFloat(saved) : 0.75;
+    return saved ? parseFloat(saved) : (isMobile ? 0.95 : 0.82);
   });
 
   const isSkippingRef = useRef(false);
@@ -62,18 +110,17 @@ export const useSpeech = () => {
       if (availableVoices && availableVoices.length > 0) {
         setVoices(availableVoices);
 
-        // If no selected voice or currently selected voice isn't valid, pick optimal Spanish default
+        // Check if saved voice exists on THIS current device
         const saved = localStorage.getItem('radiant_selected_voice_uri');
         const hasSaved = saved && availableVoices.some(v => v.voiceURI === saved || v.name === saved);
 
-        if (!hasSaved && !selectedVoiceURIRef.current) {
-          const defaultVoice = availableVoices.find(v => v.name.includes('Google') && v.lang.startsWith('es'))
-            || availableVoices.find(v => v.lang.startsWith('es-ES'))
-            || availableVoices.find(v => v.lang.startsWith('es'))
-            || availableVoices[0];
-
-          if (defaultVoice) {
-            setSelectedVoiceURI(defaultVoice.voiceURI);
+        if (hasSaved && saved) {
+          setSelectedVoiceURI(saved);
+        } else {
+          // If no saved voice OR saved voice was from another device (e.g. PC vs Phone), pick best voice for THIS device
+          const bestVoice = findBestSpanishVoice(availableVoices);
+          if (bestVoice) {
+            setSelectedVoiceURI(bestVoice.voiceURI);
           }
         }
       }
@@ -136,9 +183,7 @@ export const useSpeech = () => {
     if (voices.length > 0) {
       const chosenVoice = voices.find(v => v.voiceURI === selectedVoiceURIRef.current)
         || (selectedVoiceURIRef.current ? voices.find(v => v.name === selectedVoiceURIRef.current) : null)
-        || voices.find(v => v.name.includes('Google') && v.lang.startsWith('es')) 
-        || voices.find(v => v.lang.startsWith('es-ES'))
-        || voices.find(v => v.lang.startsWith('es')) 
+        || findBestSpanishVoice(voices)
         || voices[0];
 
       if (chosenVoice) {

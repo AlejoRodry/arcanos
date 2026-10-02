@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { motion } from 'motion/react';
-import { Mic, X, Volume2, Play, Check, Sliders, Sparkles } from 'lucide-react';
+import { Mic, X, Volume2, Play, Check, Sliders, Sparkles, RotateCcw } from 'lucide-react';
+import { findBestSpanishVoice } from '../hooks/useSpeech';
 
 interface VoiceSelectorModalProps {
   isOpen: boolean;
@@ -32,6 +33,8 @@ export const VoiceSelectorModal: React.FC<VoiceSelectorModalProps> = ({
 
   if (!isOpen) return null;
 
+  const isMobile = typeof navigator !== 'undefined' && /android|iphone|ipad|ipod/i.test(navigator.userAgent);
+  const bestVoice = findBestSpanishVoice(voices);
   const spanishVoices = voices.filter(v => v.lang.startsWith('es'));
   const displayedVoices = filterLang === 'es' && spanishVoices.length > 0 ? spanishVoices : voices;
 
@@ -42,6 +45,13 @@ export const VoiceSelectorModal: React.FC<VoiceSelectorModalProps> = ({
     setTimeout(() => {
       setTestingURI(null);
     }, 2800);
+  };
+
+  const handleResetOptimal = () => {
+    const optimalRate = 0.86;
+    const optimalPitch = isMobile ? 0.95 : 0.82;
+    onSpeechRateChange(optimalRate);
+    onSpeechPitchChange(optimalPitch);
   };
 
   const getCleanVoiceName = (voice: SpeechSynthesisVoice) => {
@@ -69,7 +79,7 @@ export const VoiceSelectorModal: React.FC<VoiceSelectorModalProps> = ({
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0, y: 40 }}
         transition={{ duration: 0.3, ease: "easeOut" }}
-        className="relative w-full md:max-w-lg max-h-[85vh] flex flex-col rounded-t-[28px] md:rounded-3xl bg-[#050B14]/95 border-t md:border border-[#D4AF37]/50 p-5 sm:p-6 md:p-8 shadow-[0_-10px_40px_rgba(0,0,0,0.85)] md:shadow-[0_0_60px_rgba(212,175,55,0.3)] backdrop-blur-2xl text-white overflow-hidden z-10"
+        className="relative w-full md:max-w-lg max-h-[88vh] flex flex-col rounded-t-[28px] md:rounded-3xl bg-[#050B14]/95 border-t md:border border-[#D4AF37]/50 p-5 sm:p-6 md:p-8 shadow-[0_-10px_40px_rgba(0,0,0,0.85)] md:shadow-[0_0_60px_rgba(212,175,55,0.3)] backdrop-blur-2xl text-white overflow-hidden z-10"
       >
         {/* Radiant Atmosphere Light */}
         <div className="absolute -top-24 -right-24 w-60 h-60 rounded-full bg-[#D4AF37]/15 blur-3xl pointer-events-none" />
@@ -103,14 +113,19 @@ export const VoiceSelectorModal: React.FC<VoiceSelectorModalProps> = ({
           </button>
         </div>
 
+        {/* Device Information Tip */}
+        <div className="mb-2.5 px-3 py-1.5 rounded-xl bg-white/[0.03] border border-white/10 text-[11px] text-gray-300 font-sans flex items-center justify-between gap-2 shrink-0">
+          <span>📱 Cada dispositivo tiene sus propias voces. Elige la que mejor suene en tu teléfono:</span>
+        </div>
+
         {/* Language Filter Tabs */}
         {spanishVoices.length > 0 && (
-          <div className="flex items-center gap-2 mb-3 shrink-0">
+          <div className="flex items-center gap-2 mb-2.5 shrink-0">
             <button
               onClick={() => setFilterLang('es')}
               className={`px-3 py-1 rounded-xl text-xs font-sans tracking-wide transition-all ${
                 filterLang === 'es'
-                  ? 'border border-[#D4AF37]/60 bg-[#D4AF37]/20 text-[#D4AF37] shadow-[0_0_10px_rgba(212,175,55,0.2)]'
+                  ? 'border border-[#D4AF37]/60 bg-[#D4AF37]/20 text-[#D4AF37] shadow-[0_0_10px_rgba(212,175,55,0.2)] font-semibold'
                   : 'border border-white/10 bg-white/5 text-gray-400 hover:text-white'
               }`}
             >
@@ -120,7 +135,7 @@ export const VoiceSelectorModal: React.FC<VoiceSelectorModalProps> = ({
               onClick={() => setFilterLang('all')}
               className={`px-3 py-1 rounded-xl text-xs font-sans tracking-wide transition-all ${
                 filterLang === 'all'
-                  ? 'border border-[#D4AF37]/60 bg-[#D4AF37]/20 text-[#D4AF37] shadow-[0_0_10px_rgba(212,175,55,0.2)]'
+                  ? 'border border-[#D4AF37]/60 bg-[#D4AF37]/20 text-[#D4AF37] shadow-[0_0_10px_rgba(212,175,55,0.2)] font-semibold'
                   : 'border border-white/10 bg-white/5 text-gray-400 hover:text-white'
               }`}
             >
@@ -140,6 +155,7 @@ export const VoiceSelectorModal: React.FC<VoiceSelectorModalProps> = ({
               const isSelected = selectedVoiceURI === voice.voiceURI || selectedVoiceURI === voice.name;
               const isTesting = testingURI === voice.voiceURI;
               const isSpanish = voice.lang.startsWith('es');
+              const isRecommended = bestVoice && (voice.voiceURI === bestVoice.voiceURI || voice.name === bestVoice.name);
 
               return (
                 <div
@@ -161,19 +177,26 @@ export const VoiceSelectorModal: React.FC<VoiceSelectorModalProps> = ({
                     </div>
 
                     <div className="min-w-0">
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-1.5 flex-wrap">
                         <span className={`text-sm font-serif font-medium truncate ${
                           isSelected ? 'text-[#D4AF37]' : 'text-gray-200'
                         }`}>
                           {getCleanVoiceName(voice)}
                         </span>
+                        
+                        {isRecommended && (
+                          <span className="text-[9px] font-sans px-1.5 py-0.2 rounded-full bg-gradient-to-r from-[#D4AF37]/30 to-[#F3E5AB]/20 text-[#F3E5AB] border border-[#D4AF37]/50 font-bold shrink-0 shadow-[0_0_6px_rgba(212,175,55,0.3)]">
+                            ✦ Recomendada
+                          </span>
+                        )}
+
                         {isSpanish && (
                           <span className="text-[9px] font-mono px-1.5 py-0.2 rounded bg-[#D4AF37]/20 text-[#D4AF37] border border-[#D4AF37]/30 shrink-0">
                             {voice.lang}
                           </span>
                         )}
                       </div>
-                      <span className="text-[11px] font-sans text-gray-400 block truncate">
+                      <span className="text-[11px] font-sans text-gray-400 block truncate mt-0.5">
                         {voice.name}
                       </span>
                     </div>
@@ -185,7 +208,7 @@ export const VoiceSelectorModal: React.FC<VoiceSelectorModalProps> = ({
                     className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border text-xs font-sans transition-all active:scale-95 shrink-0 ${
                       isTesting
                         ? 'border-[#D4AF37] bg-[#D4AF37] text-[#050B14] font-semibold animate-pulse'
-                        : 'border-[#D4AF37]/30 bg-[#D4AF37]/10 text-[#D4AF37] hover:bg-[#D4AF37]/20'
+                        : 'border-[#D4AF37]/40 bg-[#D4AF37]/15 text-[#D4AF37] hover:bg-[#D4AF37]/25'
                     }`}
                     title="Escuchar muestra"
                   >
@@ -199,15 +222,20 @@ export const VoiceSelectorModal: React.FC<VoiceSelectorModalProps> = ({
         </div>
 
         {/* Acoustic Fine Tuning Section (Pitch & Cadence) */}
-        <div className="pt-3 border-t border-white/10 mt-2 space-y-2.5 shrink-0">
+        <div className="pt-3 border-t border-white/10 mt-2 space-y-2 shrink-0">
           <div className="flex items-center justify-between text-xs text-[#D4AF37] font-sans">
             <span className="flex items-center gap-1.5 font-medium">
               <Sliders size={13} />
               Afinación de la Voz
             </span>
-            <span className="text-[10px] text-gray-400 font-mono">
-              Cadencia: {Math.round(speechRate * 100)}% · Tono: {Math.round(speechPitch * 100)}%
-            </span>
+            <button
+              onClick={handleResetOptimal}
+              className="flex items-center gap-1 text-[10px] text-gray-400 hover:text-[#D4AF37] active:scale-95 transition-colors"
+              title="Restablecer cadencia y tono recomendados"
+            >
+              <RotateCcw size={10} />
+              <span>Afinación Óptima</span>
+            </button>
           </div>
 
           <div className="grid grid-cols-2 gap-3 text-xs">
@@ -236,7 +264,7 @@ export const VoiceSelectorModal: React.FC<VoiceSelectorModalProps> = ({
               </div>
               <input
                 type="range"
-                min="0.5"
+                min="0.6"
                 max="1.2"
                 step="0.05"
                 value={speechPitch}
@@ -265,3 +293,4 @@ export const VoiceSelectorModal: React.FC<VoiceSelectorModalProps> = ({
     </div>
   );
 };
+

@@ -354,11 +354,12 @@ export const PWAInstallButton: React.FC<PWAInstallButtonProps> = ({
       <>
         <button
           onClick={handleButtonClick}
-          className={`h-7 sm:h-8 px-2.5 sm:px-3 flex items-center gap-1.5 rounded-full border border-[#D4AF37]/60 bg-gradient-to-r from-[#D4AF37]/20 via-[#D4AF37]/10 to-[#D4AF37]/20 hover:bg-[#D4AF37]/30 text-[#D4AF37] active:scale-95 transition-all cursor-pointer shadow-[0_0_12px_rgba(212,175,55,0.2)] shrink-0 ${className}`}
+          className={`h-7 sm:h-8 px-2 sm:px-3 flex items-center justify-center gap-1.5 rounded-full border border-[#D4AF37]/60 bg-gradient-to-r from-[#D4AF37]/20 via-[#D4AF37]/10 to-[#D4AF37]/20 hover:bg-[#D4AF37]/30 text-[#D4AF37] active:scale-95 transition-all cursor-pointer shadow-[0_0_10px_rgba(212,175,55,0.2)] shrink-0 ${className}`}
           title="Instalar oráculo en la pantalla de inicio"
+          aria-label="Instalar aplicación"
         >
           <Download size={12} className="text-[#D4AF37] animate-pulse" />
-          <span className="text-[10px] sm:text-[11px] font-serif font-semibold tracking-wider uppercase">
+          <span className="hidden sm:inline text-[10px] sm:text-[11px] font-serif font-semibold tracking-wider uppercase">
             Instalar
           </span>
         </button>

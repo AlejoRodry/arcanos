@@ -726,29 +726,29 @@ export default function App() {
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
-            className="md:hidden absolute top-0 left-0 right-0 z-30 px-3.5 sm:px-5 py-2.5 sm:py-3 flex items-center justify-between border-b border-white/10 bg-[#02060F]/90 backdrop-blur-2xl shadow-[0_4px_20px_rgba(0,0,0,0.5)]"
+            className="md:hidden absolute top-0 left-0 right-0 z-30 px-2.5 sm:px-4 py-2 sm:py-2.5 flex items-center justify-between border-b border-white/10 bg-[#02060F]/90 backdrop-blur-2xl shadow-[0_4px_20px_rgba(0,0,0,0.5)] w-full max-w-full overflow-hidden"
           >
             {/* Brand, Arcana index indicator and PWA Install Badge */}
-            <div className="flex items-center gap-2 shrink-0">
-              <span className="w-2 h-2 rounded-full bg-[#D4AF37] shadow-[0_0_10px_#D4AF37]" />
+            <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+              <span className="w-2 h-2 rounded-full bg-[#D4AF37] shadow-[0_0_8px_#D4AF37]" />
               <h1 className="text-sm sm:text-base font-serif text-[#D4AF37] tracking-wider uppercase font-semibold">
                 Arcanos
               </h1>
-              <span className="text-[10px] font-mono text-gray-400 px-2 py-0.5 rounded-full bg-white/5 border border-white/10 hidden sm:inline-block">
+              <span className="text-[10px] font-mono text-gray-400 px-1.5 py-0.5 rounded-full bg-white/5 border border-white/10 hidden sm:inline-block">
                 {currentIndex + 1}/{poems.length}
               </span>
               <PWAInstallButton variant="topbar" />
             </div>
 
-            {/* Quick Actions (Spacious MD4 Top Bar - No overcrowding) */}
-            <div className="flex items-center gap-3 sm:gap-4 shrink-0">
+            {/* Quick Actions (Compact, responsive, never overflows) */}
+            <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
               {/* Unified Audio Controller Button */}
               {!audioSrc ? (
                 <label 
-                  className="w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center text-gray-300 hover:text-[#D4AF37] rounded-xl bg-white/[0.04] border border-white/10 hover:border-[#D4AF37]/40 hover:bg-[#D4AF37]/10 cursor-pointer active:scale-95 transition-all shadow-sm"
+                  className="w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center text-gray-300 hover:text-[#D4AF37] rounded-xl bg-white/[0.04] border border-white/10 hover:border-[#D4AF37]/40 hover:bg-[#D4AF37]/10 cursor-pointer active:scale-95 transition-all shadow-sm shrink-0"
                   title="Cargar música de fondo (.mp3)"
                 >
-                  <Upload size={16} />
+                  <Upload size={14} />
                   <input 
                     type="file" 
                     accept="audio/*" 
@@ -759,14 +759,14 @@ export default function App() {
               ) : (
                 <button 
                   onClick={() => setShowMobileVolumeSlider(prev => !prev)}
-                  className={`w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center rounded-xl transition-all active:scale-95 shadow-sm relative ${
+                  className={`w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center rounded-xl transition-all active:scale-95 shadow-sm relative shrink-0 ${
                     showMobileVolumeSlider 
                       ? 'border border-[#D4AF37] bg-[#D4AF37]/25 text-[#D4AF37] shadow-[0_0_12px_rgba(212,175,55,0.3)]' 
                       : 'border border-white/10 bg-white/[0.04] text-[#D4AF37] hover:border-[#D4AF37]/40 hover:bg-[#D4AF37]/10'
                   }`}
                   title="Ajustar volumen y música"
                 >
-                  {getVolumeIcon(musicVolume, isMuted, 17)}
+                  {getVolumeIcon(musicVolume, isMuted, 15)}
                   {isAudioPlaying && !isMuted && (
                     <span className="absolute top-1 right-1 w-1.5 h-1.5 rounded-full bg-[#D4AF37] shadow-[0_0_6px_#D4AF37]" />
                   )}
@@ -776,22 +776,22 @@ export default function App() {
               {/* Theme Toggle */}
               <button
                 onClick={() => setTheme(t => t === 'astrolabe' ? 'cosmos' : 'astrolabe')}
-                className="w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center text-[#D4AF37]/80 hover:text-[#D4AF37] rounded-xl bg-white/[0.04] border border-white/10 hover:border-[#D4AF37]/40 hover:bg-[#D4AF37]/10 active:scale-95 transition-all shadow-sm"
+                className="w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center text-[#D4AF37]/80 hover:text-[#D4AF37] rounded-xl bg-white/[0.04] border border-white/10 hover:border-[#D4AF37]/40 hover:bg-[#D4AF37]/10 active:scale-95 transition-all shadow-sm shrink-0"
                 title="Cambiar escenario cósmico"
               >
-                {theme === 'astrolabe' ? <Moon size={16} /> : <Sparkles size={16} />}
+                {theme === 'astrolabe' ? <Moon size={14} /> : <Sparkles size={14} />}
               </button>
 
               {/* Sutil Separator */}
-              <div className="w-[1px] h-4.5 bg-white/15 mx-0.5 shrink-0" />
+              <div className="w-[1px] h-4 bg-white/15 mx-0.5 shrink-0" />
 
               {/* Arcana Selector Drawer Trigger */}
               <button
                 onClick={() => setIsMobileDrawerOpen(true)}
-                className="h-9 sm:h-10 px-3 sm:px-3.5 flex items-center gap-1.5 rounded-xl border border-[#D4AF37]/50 bg-[#D4AF37]/15 text-[#D4AF37] text-xs font-sans font-semibold tracking-wide active:scale-95 shadow-[0_0_12px_rgba(212,175,55,0.2)] transition-all shrink-0 hover:bg-[#D4AF37]/25"
+                className="h-8 sm:h-9 px-2.5 sm:px-3 flex items-center gap-1 sm:gap-1.5 rounded-xl border border-[#D4AF37]/50 bg-[#D4AF37]/15 text-[#D4AF37] text-xs font-sans font-semibold tracking-wide active:scale-95 shadow-[0_0_12px_rgba(212,175,55,0.2)] transition-all shrink-0 hover:bg-[#D4AF37]/25"
                 title="Ver lista de arcanos"
               >
-                <Compass size={15} className="shrink-0" />
+                <Compass size={14} className="shrink-0" />
                 <span className="text-[11px] font-bold">Lista</span>
               </button>
             </div>

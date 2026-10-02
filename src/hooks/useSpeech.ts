@@ -294,8 +294,8 @@ export const useSpeech = () => {
       setCurrentLineIndex(-1);
       setCurrentWordIndex(0);
 
-      // Natural speech for title & subtitle
-      const cleanTitle = poem.title.replace(/^([0-9IVXLCDM]+)\.\s*/, '$1, ');
+      // Natural speech for title & subtitle: strip Roman numerals so TTS pronounces "El Mago" instead of "I, El Mago"
+      const cleanTitle = poem.title.replace(/^[0-9IVXLCDM]+\.\s*/i, '').trim();
       const titleSpeechText = `${cleanTitle}. ${poem.subtitle}.`;
 
       const utterance = createUtterance(
@@ -378,7 +378,7 @@ export const useSpeech = () => {
       if (speechStage === 'hook') {
         // Skip from hook to title
         setSpeechStage('title');
-        const cleanTitle = poem.title.replace(/^([0-9IVXLCDM]+)\.\s*/, '$1, ');
+        const cleanTitle = poem.title.replace(/^[0-9IVXLCDM]+\.\s*/i, '').trim();
         const titleSpeechText = `${cleanTitle}. ${poem.subtitle}.`;
         const utterance = createUtterance(
           titleSpeechText,

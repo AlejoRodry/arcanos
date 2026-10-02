@@ -388,33 +388,33 @@ export const PWAInstallButton: React.FC<PWAInstallButtonProps> = ({
       <>
         <div 
           onClick={handleButtonClick}
-          className={`group relative overflow-hidden p-3 sm:p-3.5 rounded-2xl bg-gradient-to-r from-white/[0.04] via-[#D4AF37]/10 to-white/[0.02] border border-[#D4AF37]/40 hover:border-[#D4AF37]/80 hover:bg-[#D4AF37]/15 transition-all duration-300 cursor-pointer shadow-[0_4px_20px_rgba(0,0,0,0.4),0_0_15px_rgba(212,175,55,0.1)] active:scale-[0.99] ${className}`}
+          className={`group relative overflow-hidden p-2.5 rounded-xl bg-gradient-to-r from-white/[0.04] via-[#D4AF37]/10 to-white/[0.02] border border-[#D4AF37]/40 hover:border-[#D4AF37]/80 hover:bg-[#D4AF37]/15 transition-all duration-300 cursor-pointer shadow-[0_4px_16px_rgba(0,0,0,0.35),0_0_12px_rgba(212,175,55,0.08)] active:scale-[0.99] ${className}`}
         >
           {/* Subtle gold specular gradient ray */}
           <div className="absolute inset-0 bg-gradient-to-r from-transparent via-[#D4AF37]/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
 
-          <div className="relative z-10 flex items-center justify-between gap-3">
-            <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[#D4AF37] via-[#F3E5AB] to-[#D4AF37] text-[#050B14] flex items-center justify-center shadow-[0_0_15px_rgba(212,175,55,0.35)] shrink-0 group-hover:scale-105 transition-transform">
-                <Download size={17} className="fill-[#050B14]" />
+          <div className="relative z-10 flex items-center justify-between gap-2.5">
+            <div className="flex items-center gap-2.5 min-w-0">
+              <div className="w-7.5 h-7.5 rounded-lg bg-gradient-to-br from-[#D4AF37] via-[#F3E5AB] to-[#D4AF37] text-[#050B14] flex items-center justify-center shadow-[0_0_10px_rgba(212,175,55,0.3)] shrink-0 group-hover:scale-105 transition-transform">
+                <Download size={14} className="fill-[#050B14]" />
               </div>
-              <div className="text-left">
-                <div className="flex items-center gap-2">
-                  <span className="font-serif text-xs sm:text-sm font-semibold text-[#D4AF37] tracking-wider uppercase group-hover:text-[#F3E5AB] transition-colors">
-                    Instalar Aplicación
+              <div className="text-left min-w-0 truncate">
+                <div className="flex items-center gap-1.5">
+                  <span className="font-serif text-xs font-semibold text-[#D4AF37] tracking-wider uppercase group-hover:text-[#F3E5AB] transition-colors truncate">
+                    Instalar App
                   </span>
-                  <span className="text-[9px] font-mono px-1.5 py-0.5 rounded-full border border-[#D4AF37]/40 bg-[#D4AF37]/15 text-[#F3E5AB]">
+                  <span className="text-[8px] font-mono px-1.5 py-0.2 rounded-full border border-[#D4AF37]/40 bg-[#D4AF37]/15 text-[#F3E5AB] shrink-0">
                     OFFLINE
                   </span>
                 </div>
-                <p className="text-[10px] text-gray-400 font-serif leading-tight mt-0.5">
-                  Toca aquí para guardarla en tu teléfono
+                <p className="text-[10px] text-gray-400 font-serif leading-tight truncate mt-0.5">
+                  Toca aquí para guardarla en tu dispositivo
                 </p>
               </div>
             </div>
 
-            <div className="w-7 h-7 rounded-xl bg-white/[0.04] border border-[#D4AF37]/30 text-[#D4AF37] flex items-center justify-center group-hover:bg-[#D4AF37]/20 group-hover:border-[#D4AF37]/60 group-hover:translate-x-0.5 transition-all shrink-0">
-              <ChevronRight size={15} />
+            <div className="w-6 h-6 rounded-lg bg-white/[0.04] border border-[#D4AF37]/30 text-[#D4AF37] flex items-center justify-center group-hover:bg-[#D4AF37]/20 group-hover:border-[#D4AF37]/60 group-hover:translate-x-0.5 transition-all shrink-0">
+              <ChevronRight size={13} />
             </div>
           </div>
         </div>

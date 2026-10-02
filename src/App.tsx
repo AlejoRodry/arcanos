@@ -574,7 +574,7 @@ export default function App() {
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: -50, filter: "blur(10px)" }}
             transition={{ duration: 0.8, ease: "easeInOut" }}
-            className={`hidden md:flex absolute top-0 left-0 h-full w-[420px] p-8 lg:p-10 flex-col justify-between z-20 transition-all duration-1000 backdrop-blur-2xl border-r border-[#D4AF37]/30 shadow-[24px_0_70px_rgba(0,0,0,0.85),inset_-1px_0_2px_rgba(212,175,55,0.35),inset_0_1px_1px_rgba(255,255,255,0.12)] ${
+            className={`hidden md:flex absolute top-0 left-0 h-full w-[280px] lg:w-[310px] p-4 lg:p-5 flex-col justify-between z-20 transition-all duration-1000 backdrop-blur-2xl border-r border-[#D4AF37]/30 shadow-[16px_0_50px_rgba(0,0,0,0.85),inset_-1px_0_2px_rgba(212,175,55,0.35),inset_0_1px_1px_rgba(255,255,255,0.12)] ${
               theme === 'cosmos' 
                 ? 'bg-gradient-to-b from-[#060412]/92 via-[#03010A]/95 to-[#010006]/98' 
                 : 'bg-gradient-to-b from-[#060D1A]/92 via-[#030710]/95 to-[#010408]/98'
@@ -585,70 +585,70 @@ export default function App() {
             <div className="absolute top-0 right-0 w-[8px] h-full bg-gradient-to-b from-transparent via-[#D4AF37]/20 via-[#00E5FF]/10 to-transparent blur-[4px] pointer-events-none" />
             
             {/* Ambient Corner Atmosphere */}
-            <div className="absolute -top-24 -left-24 w-72 h-72 rounded-full bg-[#D4AF37]/[0.09] blur-3xl pointer-events-none" />
-            <div className="absolute -bottom-24 -right-24 w-72 h-72 rounded-full bg-[#00E5FF]/[0.06] blur-3xl pointer-events-none" />
-            <div className="absolute top-0 left-0 right-0 h-40 bg-gradient-to-b from-[#D4AF37]/[0.06] via-transparent to-transparent pointer-events-none" />
+            <div className="absolute -top-24 -left-24 w-60 h-60 rounded-full bg-[#D4AF37]/[0.08] blur-3xl pointer-events-none" />
+            <div className="absolute -bottom-24 -right-24 w-60 h-60 rounded-full bg-[#00E5FF]/[0.05] blur-3xl pointer-events-none" />
+            <div className="absolute top-0 left-0 right-0 h-32 bg-gradient-to-b from-[#D4AF37]/[0.06] via-transparent to-transparent pointer-events-none" />
 
             {/* Subtle MD4 Stencil Corner Accents */}
-            <div className="absolute top-3 left-3 w-3.5 h-3.5 border-t border-l border-[#D4AF37]/40 pointer-events-none" />
-            <div className="absolute top-3 right-3 w-3.5 h-3.5 border-t border-r border-[#D4AF37]/40 pointer-events-none" />
-            <div className="absolute bottom-3 left-3 w-3.5 h-3.5 border-b border-l border-[#D4AF37]/40 pointer-events-none" />
-            <div className="absolute bottom-3 right-3 w-3.5 h-3.5 border-b border-r border-[#D4AF37]/40 pointer-events-none" />
+            <div className="absolute top-2.5 left-2.5 w-2.5 h-2.5 border-t border-l border-[#D4AF37]/40 pointer-events-none" />
+            <div className="absolute top-2.5 right-2.5 w-2.5 h-2.5 border-t border-r border-[#D4AF37]/40 pointer-events-none" />
+            <div className="absolute bottom-2.5 left-2.5 w-2.5 h-2.5 border-b border-l border-[#D4AF37]/40 pointer-events-none" />
+            <div className="absolute bottom-2.5 right-2.5 w-2.5 h-2.5 border-b border-r border-[#D4AF37]/40 pointer-events-none" />
             <div>
-              <div className="flex items-center justify-between mb-2">
-                <h1 className="text-3xl lg:text-4xl text-[#D4AF37] font-semibold tracking-wider uppercase">
+              <div className="flex items-center justify-between mb-1">
+                <h1 className="text-lg lg:text-xl text-[#D4AF37] font-semibold tracking-wider uppercase font-serif">
                   Arcanos
                 </h1>
                 
-                <div className="flex items-center gap-2.5">
+                <div className="flex items-center gap-1">
                   {/* Sentencia del Círculo Modal Trigger */}
                   <button
                     onClick={() => setIsInscriptionModalOpen(true)}
-                    className="w-10 h-10 flex items-center justify-center text-[#D4AF37]/80 hover:text-[#D4AF37] transition-all rounded-xl bg-white/[0.03] hover:bg-[#D4AF37]/15 border border-white/10 hover:border-[#D4AF37]/40 active:scale-95 group relative shadow-sm"
+                    className="w-7 h-7 flex items-center justify-center text-[#D4AF37]/80 hover:text-[#D4AF37] transition-all rounded-lg bg-white/[0.03] hover:bg-[#D4AF37]/15 border border-white/10 hover:border-[#D4AF37]/40 active:scale-95 group relative shadow-sm cursor-pointer"
                     title="Ver qué dice el Círculo Sagrado del Fondo"
                   >
-                    <Info size={18} />
+                    <Info size={14} />
                   </button>
 
                   {/* Theme Toggle Button */}
                   <button
                     onClick={() => setTheme(t => t === 'astrolabe' ? 'cosmos' : 'astrolabe')}
-                    className="w-10 h-10 flex items-center justify-center text-[#D4AF37]/80 hover:text-[#D4AF37] transition-all rounded-xl bg-white/[0.03] hover:bg-[#D4AF37]/15 border border-white/10 hover:border-[#D4AF37]/40 active:scale-95 shadow-sm"
+                    className="w-7 h-7 flex items-center justify-center text-[#D4AF37]/80 hover:text-[#D4AF37] transition-all rounded-lg bg-white/[0.03] hover:bg-[#D4AF37]/15 border border-white/10 hover:border-[#D4AF37]/40 active:scale-95 shadow-sm cursor-pointer"
                     title="Cambiar Escenario"
                   >
-                    {theme === 'astrolabe' ? <Moon size={18} /> : <Sparkles size={18} />}
+                    {theme === 'astrolabe' ? <Moon size={14} /> : <Sparkles size={14} />}
                   </button>
                 </div>
               </div>
               
-              <p className="text-gray-400 italic mb-6 tracking-wider text-sm">
+              <p className="text-gray-400 italic mb-2.5 tracking-wider text-[11px] font-serif">
                 El teatro del destino
               </p>
             </div>
 
             {/* Scrollable list of Arcanos */}
-            <div className="flex-1 min-h-0 overflow-y-auto custom-scrollbar pr-2 mb-6 space-y-2.5">
+            <div className="flex-1 min-h-0 overflow-y-auto custom-scrollbar pr-1 mb-2.5 space-y-1">
               {poems.map((poem) => {
                 const isSelected = selectedPoemId === poem.id;
                 return (
                   <button
                     key={poem.id}
                     onClick={() => setSelectedPoemId(poem.id)}
-                    className={`w-full text-left px-5 py-3 rounded-xl transition-all duration-300 border backdrop-blur-sm group relative overflow-hidden ${
+                    className={`w-full text-left px-3 py-1.5 rounded-lg transition-all duration-300 border backdrop-blur-sm group relative overflow-hidden cursor-pointer ${
                       isSelected
-                        ? 'border-[#D4AF37]/60 bg-gradient-to-r from-[#D4AF37]/15 to-transparent text-[#D4AF37] shadow-[0_0_20px_rgba(212,175,55,0.15)] translate-x-1.5'
-                        : 'border-white/5 bg-white/[0.02] text-gray-400 hover:text-gray-200 hover:border-white/15 hover:bg-white/[0.05] hover:translate-x-1'
+                        ? 'border-[#D4AF37]/60 bg-gradient-to-r from-[#D4AF37]/15 to-transparent text-[#D4AF37] shadow-[0_0_12px_rgba(212,175,55,0.12)] translate-x-1'
+                        : 'border-white/5 bg-white/[0.02] text-gray-400 hover:text-gray-200 hover:border-white/15 hover:bg-white/[0.05] hover:translate-x-0.5'
                     }`}
                   >
                     <div className="flex items-center justify-between">
-                      <span className="text-base font-serif font-medium tracking-wide">
+                      <span className="text-xs font-serif font-medium tracking-wide">
                         {poem.title}
                       </span>
                       {isSelected && (
-                        <span className="w-1.5 h-1.5 rounded-full bg-[#D4AF37] shadow-[0_0_8px_#D4AF37]" />
+                        <span className="w-1.5 h-1.5 rounded-full bg-[#D4AF37] shadow-[0_0_6px_#D4AF37]" />
                       )}
                     </div>
-                    <p className={`text-xs italic line-clamp-1 mt-1 font-serif transition-colors ${
+                    <p className={`text-[10px] italic line-clamp-1 mt-0.5 font-serif transition-colors ${
                       isSelected ? 'text-amber-200/80' : 'text-gray-500 group-hover:text-gray-400'
                     }`}>
                       &ldquo;{poem.hook}&rdquo;
@@ -658,15 +658,15 @@ export default function App() {
               })}
             </div>
 
-            <div>
+            <div className="pt-2 border-t border-white/5 space-y-1.5">
               {/* Primary Action Button */}
               <button
                 onClick={handleStart}
-                className="w-full group relative inline-flex flex-shrink-0 items-center justify-center gap-3 px-6 py-4 bg-transparent overflow-hidden text-[#D4AF37] border border-[#D4AF37]/40 hover:border-[#D4AF37] rounded-xl transition-all duration-500 ease-out shadow-[0_0_25px_rgba(212,175,55,0.15)]"
+                className="w-full group relative inline-flex flex-shrink-0 items-center justify-center gap-2 px-3.5 py-2 bg-transparent overflow-hidden text-[#D4AF37] border border-[#D4AF37]/40 hover:border-[#D4AF37] rounded-xl transition-all duration-500 ease-out shadow-[0_0_15px_rgba(212,175,55,0.1)] cursor-pointer"
               >
                 <div className="absolute inset-0 bg-[#D4AF37] translate-y-[100%] group-hover:translate-y-[0%] transition-transform duration-500 ease-out" />
-                <Play size={20} className="relative z-10 flex-shrink-0 group-hover:text-[#050B14] transition-colors duration-500" />
-                <span className="relative z-10 text-sm lg:text-base uppercase tracking-[0.2em] whitespace-nowrap group-hover:text-[#050B14] transition-colors duration-500 font-semibold">
+                <Play size={15} className="relative z-10 flex-shrink-0 group-hover:text-[#050B14] transition-colors duration-500" />
+                <span className="relative z-10 text-[11px] uppercase tracking-[0.16em] whitespace-nowrap group-hover:text-[#050B14] transition-colors duration-500 font-semibold font-serif">
                   Iniciar Lectura
                 </span>
               </button>
@@ -674,42 +674,42 @@ export default function App() {
               {/* Botón Unificado de Audio & Voz */}
               <button
                 onClick={() => setIsVoiceModalOpen(true)}
-                className="w-full mt-3.5 flex items-center justify-between p-3.5 rounded-2xl bg-white/[0.03] hover:bg-white/[0.06] border border-white/10 hover:border-[#D4AF37]/50 transition-all duration-300 group shadow-sm active:scale-[0.99] cursor-pointer"
+                className="w-full flex items-center justify-between p-2 rounded-xl bg-white/[0.03] hover:bg-white/[0.06] border border-white/10 hover:border-[#D4AF37]/50 transition-all duration-300 group shadow-sm active:scale-[0.99] cursor-pointer"
                 title="Configurar voz del narrador y música de fondo"
               >
-                <div className="flex items-center gap-3 min-w-0">
-                  <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-[#D4AF37]/20 via-[#D4AF37]/10 to-transparent border border-[#D4AF37]/30 flex items-center justify-center text-[#D4AF37] shrink-0 group-hover:scale-105 transition-transform">
-                    <Volume2 size={16} />
+                <div className="flex items-center gap-2 min-w-0">
+                  <div className="w-6.5 h-6.5 rounded-md bg-gradient-to-br from-[#D4AF37]/20 via-[#D4AF37]/10 to-transparent border border-[#D4AF37]/30 flex items-center justify-center text-[#D4AF37] shrink-0 group-hover:scale-105 transition-transform">
+                    <Volume2 size={13} />
                   </div>
-                  <div className="text-left min-w-0">
-                    <div className="flex items-center gap-2">
-                      <span className="font-serif text-xs font-semibold text-[#D4AF37] tracking-wider uppercase">
+                  <div className="text-left min-w-0 truncate">
+                    <div className="flex items-center gap-1.5">
+                      <span className="font-serif text-[10px] font-semibold text-[#D4AF37] tracking-wider uppercase">
                         Voz & Música
                       </span>
                       {audioSrc && (
                         <span className="w-1.5 h-1.5 rounded-full bg-[#D4AF37] animate-pulse" />
                       )}
                     </div>
-                    <div className="flex items-center gap-1.5 text-[11px] text-gray-400 truncate font-serif mt-0.5">
+                    <div className="flex items-center gap-1 text-[9px] text-gray-400 truncate font-serif">
                       <span className="truncate">{activeVoiceName}</span>
                       <span className="opacity-40">•</span>
                       <span className="shrink-0 text-gray-400">
-                        {audioSrc ? (isAudioPlaying ? 'Música activa' : 'Música en pausa') : 'Subir música'}
+                        {audioSrc ? (isAudioPlaying ? 'Música activa' : 'En pausa') : 'Subir música'}
                       </span>
                     </div>
                   </div>
                 </div>
 
-                <div className="flex items-center gap-1.5 shrink-0 ml-2">
-                  <span className="text-[11px] font-serif text-[#D4AF37] group-hover:underline">
+                <div className="flex items-center gap-1 shrink-0 ml-1">
+                  <span className="text-[9px] font-serif text-[#D4AF37] group-hover:underline">
                     Ajustar
                   </span>
-                  <ChevronRight size={14} className="text-[#D4AF37]/60 group-hover:translate-x-0.5 transition-transform" />
+                  <ChevronRight size={12} className="text-[#D4AF37]/60 group-hover:translate-x-0.5 transition-transform" />
                 </div>
               </button>
 
               {/* PWA Install Button for Desktop */}
-              <div className="mt-3">
+              <div>
                 <PWAInstallButton variant="full" className="w-full" />
               </div>
             </div>

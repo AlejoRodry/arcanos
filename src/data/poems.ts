@@ -263,7 +263,7 @@ export const poems: Poem[] = [
     lines: [
       "Camino por el sendero pálido de la noche.",
       "Donde las sombras engañan",
-      "y los instintos aullan en la oscuridad.",
+      "y los instintos aúllan en la oscuridad.",
       "No confíes en lo que ves,",
       "sino en lo que sientes bajo la superficie.",
       "Navega tus ilusiones para encontrar la luz."

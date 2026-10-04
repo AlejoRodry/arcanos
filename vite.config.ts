@@ -32,6 +32,7 @@ export default defineConfig(({ command }) => {
           orientation: 'portrait',
           start_url: basePath,
           scope: basePath,
+          lang: 'es',
           categories: ['entertainment', 'lifestyle', 'books'],
           icons: [
             {

@@ -21,9 +21,13 @@ import {
   Info,
   RotateCw,
   Volume1,
-  Mic
+  Mic,
+  Video,
+  FolderDown
 } from 'lucide-react';
 import { circleInscriptions, CircleInscription, getNextCircleInscription } from './data/circleInscriptions';
+import { useScreenRecorder, AspectRatio } from './hooks/useScreenRecorder';
+import { StudioModal } from './components/StudioModal';
 
 type ThemeType = 'astrolabe' | 'cosmos';
 
@@ -35,6 +39,27 @@ export default function App() {
   const [currentInscription, setCurrentInscription] = useState<CircleInscription>(getNextCircleInscription);
   const [isInscriptionModalOpen, setIsInscriptionModalOpen] = useState(false);
   const [isVoiceModalOpen, setIsVoiceModalOpen] = useState(false);
+  const [isStudioModalOpen, setIsStudioModalOpen] = useState(false);
+
+  // Screen & Audio Recorder with Aspect Ratio & Persistent Storage
+  const {
+    isRecording,
+    durationFormatted,
+    videoUrl,
+    aspectRatio,
+    autoRecordOnStart,
+    savedRecordings,
+    lastSavedRecording,
+    recordingError,
+    clearRecordingError,
+    setAspectRatio,
+    setAutoRecordOnStart,
+    startRecording,
+    stopRecording,
+    deleteRecording,
+    clearAllRecordings,
+    downloadRecording
+  } = useScreenRecorder();
   
   // Audio State & Volume Continuum (Default low & atmospheric: 0.20)
   const [audioSrc, setAudioSrc] = useState<string | null>(null);
@@ -133,9 +158,18 @@ export default function App() {
     return <Volume2 size={size} />;
   };
 
-  const handleStart = useCallback(() => {
+  const handleStart = useCallback(async () => {
     if (theaterMode) return;
     
+    if (autoRecordOnStart && !isRecording) {
+      const started = await startRecording({
+        poemId: selectedPoem.id,
+        poemTitle: selectedPoem.title,
+        aspectRatio
+      });
+      if (!started) return;
+    }
+
     setTheaterMode(true);
     setIsMobileDrawerOpen(false);
     setShowMobileVolumeSlider(false);
@@ -146,19 +180,59 @@ export default function App() {
 
     speakPoem(selectedPoem, () => {
       setTheaterMode(false);
+      stopRecording();
       if (audioRef.current) {
         audioRef.current.volume = isMuted ? 0 : musicVolume;
       }
     });
-  }, [theaterMode, selectedPoem, speakPoem, isMuted, musicVolume]);
+  }, [theaterMode, selectedPoem, speakPoem, isMuted, musicVolume, autoRecordOnStart, isRecording, startRecording, stopRecording, aspectRatio]);
+
+  const handleStartRecordingAndPoem = useCallback(async () => {
+    // 1. Enter theater mode and close modals first so layout is completely centered and idle
+    setIsStudioModalOpen(false);
+    setIsMobileDrawerOpen(false);
+    setShowMobileVolumeSlider(false);
+    setTheaterMode(true);
+
+    // Brief 250ms pause so sidebar slides away and layout stabilizes at dead-center
+    await new Promise(r => setTimeout(r, 250));
+
+    // 2. Initialize screen or canvas capture on the already centered view
+    const started = await startRecording({
+      poemId: selectedPoem.id,
+      poemTitle: selectedPoem.title,
+      aspectRatio
+    });
+
+    if (started) {
+      if (audioRef.current) {
+        audioRef.current.volume = isMuted ? 0 : musicVolume * 0.25;
+      }
+
+      // Small pause to allow visual transition before recitation begins
+      setTimeout(() => {
+        speakPoem(selectedPoem, () => {
+          setTheaterMode(false);
+          stopRecording();
+          if (audioRef.current) {
+            audioRef.current.volume = isMuted ? 0 : musicVolume;
+          }
+        });
+      }, 400);
+    } else {
+      // User cancelled browser share prompt, revert theater mode
+      setTheaterMode(false);
+    }
+  }, [selectedPoem, aspectRatio, startRecording, speakPoem, isMuted, musicVolume, stopRecording]);
 
   const handleStop = useCallback(() => {
     stop();
     setTheaterMode(false);
+    stopRecording();
     if (audioRef.current) {
       audioRef.current.volume = isMuted ? 0 : musicVolume;
     }
-  }, [stop, isMuted, musicVolume]);
+  }, [stop, isMuted, musicVolume, stopRecording]);
 
   // Touch swipe gestures for mobile navigation
   const handleTouchStart = (e: React.TouchEvent) => {
@@ -249,6 +323,7 @@ export default function App() {
       <AnimatePresence>
         {theme === 'astrolabe' && (
           <motion.div 
+            key="bg-theme-astrolabe"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -329,6 +404,7 @@ export default function App() {
       <AnimatePresence>
         {theme === 'cosmos' && (
           <motion.div 
+            key="bg-theme-cosmos"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -570,6 +646,7 @@ export default function App() {
       <AnimatePresence>
         {!theaterMode && (
           <motion.div
+            key="desktop-panel"
             initial={{ opacity: 0, x: -50 }}
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: -50, filter: "blur(10px)" }}
@@ -601,6 +678,22 @@ export default function App() {
                 </h1>
                 
                 <div className="flex items-center gap-1">
+                  {/* Studio / Video Recording Trigger */}
+                  <button
+                    onClick={() => setIsStudioModalOpen(true)}
+                    className={`w-7 h-7 flex items-center justify-center transition-all rounded-lg border active:scale-95 group relative shadow-sm cursor-pointer ${
+                      isRecording
+                        ? 'bg-red-500/25 border-red-500 text-red-400 animate-pulse shadow-[0_0_12px_rgba(239,68,68,0.4)]'
+                        : 'text-[#D4AF37]/80 hover:text-[#D4AF37] bg-white/[0.03] hover:bg-[#D4AF37]/15 border-white/10 hover:border-[#D4AF37]/40'
+                    }`}
+                    title="Estudio de Grabación & Formato (Shorts, YouTube)"
+                  >
+                    <Video size={14} />
+                    {isRecording && (
+                      <span className="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 rounded-full bg-red-500 animate-ping" />
+                    )}
+                  </button>
+
                   {/* Sentencia del Círculo Modal Trigger */}
                   <button
                     onClick={() => setIsInscriptionModalOpen(true)}
@@ -628,11 +721,11 @@ export default function App() {
 
             {/* Scrollable list of Arcanos */}
             <div className="flex-1 min-h-0 overflow-y-auto custom-scrollbar pr-1 mb-2.5 space-y-1">
-              {poems.map((poem) => {
+              {poems.map((poem, idx) => {
                 const isSelected = selectedPoemId === poem.id;
                 return (
                   <button
-                    key={poem.id}
+                    key={`d-poem-${poem.id}-${idx}`}
                     onClick={() => setSelectedPoemId(poem.id)}
                     className={`w-full text-left px-3 py-1.5 rounded-lg transition-all duration-300 border backdrop-blur-sm group relative overflow-hidden cursor-pointer ${
                       isSelected
@@ -723,6 +816,7 @@ export default function App() {
       <AnimatePresence>
         {!theaterMode && (
           <motion.div
+            key="mobile-top-bar"
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
@@ -773,6 +867,22 @@ export default function App() {
                 </button>
               )}
 
+              {/* Studio Recording Trigger */}
+              <button
+                onClick={() => setIsStudioModalOpen(true)}
+                className={`w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center rounded-xl border active:scale-95 transition-all shadow-sm shrink-0 relative ${
+                  isRecording 
+                    ? 'bg-red-500/25 border-red-500 text-red-400 animate-pulse'
+                    : 'text-[#D4AF37]/80 hover:text-[#D4AF37] bg-white/[0.04] border-white/10 hover:border-[#D4AF37]/40 hover:bg-[#D4AF37]/10'
+                }`}
+                title="Estudio de Grabación & Formato"
+              >
+                <Video size={14} />
+                {isRecording && (
+                  <span className="absolute top-1 right-1 w-1.5 h-1.5 rounded-full bg-red-500 animate-ping" />
+                )}
+              </button>
+
               {/* Theme Toggle */}
               <button
                 onClick={() => setTheme(t => t === 'astrolabe' ? 'cosmos' : 'astrolabe')}
@@ -800,6 +910,7 @@ export default function App() {
             <AnimatePresence>
               {showMobileVolumeSlider && audioSrc && (
                 <motion.div
+                  key="mobile-volume-slider"
                   initial={{ opacity: 0, y: -8, scale: 0.96 }}
                   animate={{ opacity: 1, y: 0, scale: 1 }}
                   exit={{ opacity: 0, y: -8, scale: 0.96 }}
@@ -875,7 +986,7 @@ export default function App() {
       {/* ======================================================== */}
       <AnimatePresence>
         {isMobileDrawerOpen && (
-          <div className="fixed inset-0 z-50 md:hidden flex flex-col justify-end">
+          <div key="mobile-drawer-portal" className="fixed inset-0 z-50 md:hidden flex flex-col justify-end">
             {/* Backdrop */}
             <motion.div
               initial={{ opacity: 0 }}
@@ -920,7 +1031,7 @@ export default function App() {
                   const isSelected = selectedPoemId === poem.id;
                   return (
                     <button
-                      key={poem.id}
+                      key={`m-poem-${poem.id}-${idx}`}
                       onClick={() => {
                         setSelectedPoemId(poem.id);
                         setIsMobileDrawerOpen(false);
@@ -999,30 +1110,14 @@ export default function App() {
         )}
       </AnimatePresence>
 
-      {/* ======================================================== */}
-      {/* --- THEATER MODE EXIT BUTTON (Mobile & Desktop) --- */}
-      {/* ======================================================== */}
-      <AnimatePresence>
-        {theaterMode && (
-          <motion.button
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.8 }}
-            onClick={handleStop}
-            className="absolute top-6 right-6 z-40 p-3.5 rounded-full border border-[#D4AF37]/40 bg-[#050B14]/80 text-[#D4AF37] hover:bg-[#D4AF37]/20 transition-all backdrop-blur-md shadow-[0_0_20px_rgba(0,0,0,0.8)] active:scale-95"
-            title="Cerrar lectura (Esc)"
-          >
-            <X size={20} />
-          </motion.button>
-        )}
-      </AnimatePresence>
+
 
       {/* ======================================================== */}
       {/* --- MD4 MODAL: INSCRIPCIÓN DEL CÍRCULO SAGRADO --- */}
       {/* ======================================================== */}
       <AnimatePresence>
         {isInscriptionModalOpen && (
-          <div className="fixed inset-0 z-50 flex flex-col justify-end md:justify-center md:items-center p-0 md:p-4">
+          <div key="inscription-modal-portal" className="fixed inset-0 z-50 flex flex-col justify-end md:justify-center md:items-center p-0 md:p-4">
             {/* Backdrop */}
             <motion.div
               initial={{ opacity: 0 }}
@@ -1140,6 +1235,7 @@ export default function App() {
       <AnimatePresence>
         {isVoiceModalOpen && (
           <VoiceSelectorModal
+            key="voice-selector-modal"
             isOpen={isVoiceModalOpen}
             onClose={() => setIsVoiceModalOpen(false)}
             voices={voices}
@@ -1161,6 +1257,98 @@ export default function App() {
           />
         )}
       </AnimatePresence>
+
+      {/* Studio Recording & Aspect Ratio Modal */}
+      <AnimatePresence>
+        {isStudioModalOpen && (
+          <StudioModal
+            key="studio-recording-modal"
+            isOpen={isStudioModalOpen}
+            onClose={() => setIsStudioModalOpen(false)}
+            aspectRatio={aspectRatio}
+            onSelectAspectRatio={setAspectRatio}
+            isRecording={isRecording}
+            recordingDuration={durationFormatted}
+            autoRecordOnStart={autoRecordOnStart}
+            onToggleAutoRecord={setAutoRecordOnStart}
+            onStartRecording={handleStartRecordingAndPoem}
+            onStopRecording={stopRecording}
+            savedRecordings={savedRecordings}
+            onDownloadRecording={downloadRecording}
+            onDeleteRecording={deleteRecording}
+            onClearAllRecordings={clearAllRecordings}
+            videoUrl={videoUrl}
+          />
+        )}
+      </AnimatePresence>
+
+      {/* Toast Notification when a recording is successfully saved to IndexedDB */}
+      <AnimatePresence>
+        {lastSavedRecording && (
+          <motion.div
+            key={`toast-save-${lastSavedRecording.id}`}
+            initial={{ opacity: 0, y: 30, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 30, scale: 0.95 }}
+            className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3 px-4 py-3 rounded-2xl bg-[#02060F]/95 border border-[#D4AF37] shadow-[0_0_35px_rgba(212,175,55,0.4)] text-white backdrop-blur-xl max-w-sm sm:max-w-md w-[92%]"
+          >
+            <div className="w-8 h-8 rounded-xl bg-[#D4AF37]/20 border border-[#D4AF37]/40 flex items-center justify-center text-[#D4AF37] shrink-0">
+              <FolderDown size={16} />
+            </div>
+            <div className="min-w-0 flex-1">
+              <div className="font-serif text-xs font-semibold text-[#D4AF37] truncate">
+                ✓ Video Guardado en tu Galería
+              </div>
+              <div className="text-[11px] text-gray-300 font-sans truncate">
+                {lastSavedRecording.poemTitle} • {lastSavedRecording.aspectRatio} • {lastSavedRecording.fileSizeFormatted}
+              </div>
+            </div>
+            <button
+              onClick={() => setIsStudioModalOpen(true)}
+              className="px-3 py-1.5 rounded-xl bg-[#D4AF37] text-[#050B14] font-serif font-bold text-xs hover:bg-[#F3E5AB] transition-all shrink-0 cursor-pointer shadow-sm active:scale-95"
+            >
+              Ver Galería
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Toast Warning if Recording fails */}
+      <AnimatePresence>
+        {recordingError && (
+          <motion.div
+            key="toast-error-banner"
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            className="fixed top-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2.5 px-4 py-2.5 rounded-2xl bg-red-950/90 border border-red-500/50 shadow-[0_0_25px_rgba(239,68,68,0.3)] text-red-200 text-xs backdrop-blur-xl max-w-md text-center"
+          >
+            <span>{recordingError}</span>
+            <button
+              onClick={clearRecordingError}
+              className="p-1 rounded-full text-red-400 hover:text-white"
+            >
+              <X size={14} />
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Floating REC Status Bar when Recording is active (hidden in theater mode for clean video export) */}
+      {isRecording && !theaterMode && (
+        <div className="absolute top-4 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2 px-3 py-1.5 rounded-full bg-red-600/30 border border-red-500/60 backdrop-blur-xl text-red-300 font-mono text-xs shadow-[0_0_25px_rgba(239,68,68,0.4)] animate-pulse select-none">
+          <span className="w-2 h-2 rounded-full bg-red-500 animate-ping" />
+          <span>GRABANDO {durationFormatted}</span>
+          <button
+            onClick={stopRecording}
+            className="ml-1.5 px-2 py-0.5 rounded-md bg-red-500 hover:bg-red-600 text-white font-sans text-[10px] font-bold uppercase transition-all shadow-sm active:scale-95 cursor-pointer"
+          >
+            Detener & Guardar
+          </button>
+        </div>
+      )}
+
+
 
       {/* ======================================================== */}
       {/* --- CINEMATIC READER (Center Display & Recitation) --- */}
@@ -1186,6 +1374,7 @@ export default function App() {
         onOpenVoiceModal={() => setIsVoiceModalOpen(true)}
         onOpenInscriptionModal={() => setIsInscriptionModalOpen(true)}
         activeVoiceName={activeVoiceName}
+        aspectRatio={aspectRatio}
       />
     </div>
   );

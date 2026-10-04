@@ -19,6 +19,7 @@ interface CinematicReaderProps {
   onOpenVoiceModal?: () => void;
   onOpenInscriptionModal?: () => void;
   activeVoiceName?: string;
+  aspectRatio?: 'free' | '9:16' | '16:9' | '1:1';
 }
 
 export const CinematicReader: React.FC<CinematicReaderProps> = ({
@@ -34,15 +35,17 @@ export const CinematicReader: React.FC<CinematicReaderProps> = ({
   onNext,
   onOpenVoiceModal,
   onOpenInscriptionModal,
-  activeVoiceName
+  activeVoiceName,
+  aspectRatio = 'free'
 }) => {
   return (
     <div
       onClick={onSkip}
-      className={`absolute inset-0 flex flex-col items-center justify-center p-4 md:p-8 z-10 select-none transition-all duration-1000 ${
+      translate="no"
+      className={`notranslate absolute inset-0 flex flex-col items-center justify-center p-4 md:p-8 z-10 select-none transition-all duration-1000 ${
         !theaterMode 
           ? 'md:pl-[295px] lg:pl-[325px] pointer-events-none pt-14 md:pt-0' 
-          : 'pl-0 cursor-pointer pointer-events-auto pb-8 md:pb-12'
+          : 'pl-0 cursor-pointer pointer-events-auto p-4 md:p-6'
       }`}
     >
       <AnimatePresence mode="wait">
@@ -163,7 +166,7 @@ export const CinematicReader: React.FC<CinematicReaderProps> = ({
             animate={{ opacity: 1, scale: 1, filter: 'blur(0px)' }}
             exit={{ opacity: 0, scale: 1.05, filter: 'blur(12px)', transition: { duration: 0.8 } }}
             transition={{ duration: 1.2, ease: 'easeOut' }}
-            className="text-center max-w-3xl px-4 flex flex-col items-center"
+            className={`text-center px-4 flex flex-col items-center ${aspectRatio === '9:16' ? 'max-w-sm' : 'max-w-3xl'}`}
           >
             {/* Spatial Radiant Stencil Aura */}
             <motion.div
@@ -189,14 +192,16 @@ export const CinematicReader: React.FC<CinematicReaderProps> = ({
             </motion.span>
 
             {/* Word-by-word Illuminated Hook Question */}
-            <div className="flex flex-wrap justify-center gap-x-2 md:gap-x-3 gap-y-1.5 text-xl sm:text-2xl md:text-3xl lg:text-4xl font-serif italic text-amber-50 leading-snug md:leading-tight tracking-wide drop-shadow-[0_4px_25px_rgba(0,0,0,0.9)] max-w-2xl">
+            <div className={`flex flex-wrap justify-center gap-x-2 md:gap-x-3 gap-y-1.5 font-serif italic text-amber-50 leading-snug md:leading-tight tracking-wide drop-shadow-[0_4px_25px_rgba(0,0,0,0.9)] ${
+              aspectRatio === '9:16' ? 'text-xl sm:text-2xl max-w-xs' : 'text-xl sm:text-2xl md:text-3xl lg:text-4xl max-w-2xl'
+            }`}>
               {poem.hook.trim().split(/\s+/).map((word, wIdx) => {
                 const isRevealed = wIdx <= currentWordIndex;
                 const isCurrent = wIdx === currentWordIndex;
 
                 return (
                   <motion.span
-                    key={wIdx}
+                    key={`hook-w-${wIdx}-${word}`}
                     animate={{
                       opacity: isCurrent ? 1 : isRevealed ? 0.95 : 0.7,
                       color: isCurrent ? '#D4AF37' : isRevealed ? '#FFFBEB' : '#E2E8F0',
@@ -219,15 +224,6 @@ export const CinematicReader: React.FC<CinematicReaderProps> = ({
               transition={{ delay: 0.5, duration: 1.2 }}
               className="h-[1.5px] bg-gradient-to-r from-transparent via-[#D4AF37] to-transparent mt-4 md:mt-6"
             />
-
-            <motion.span
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 0.5 }}
-              transition={{ delay: 0.8, duration: 1 }}
-              className="text-[10px] md:text-[11px] text-gray-400 mt-3 md:mt-4 font-sans tracking-widest uppercase"
-            >
-              Toca o presiona [Espacio] para saltar
-            </motion.span>
           </motion.div>
         )}
 
@@ -239,15 +235,19 @@ export const CinematicReader: React.FC<CinematicReaderProps> = ({
             animate={{ opacity: 1, scale: 1, filter: 'blur(0px)' }}
             exit={{ opacity: 0, scale: 1.05, filter: 'blur(10px)', transition: { duration: 0.8 } }}
             transition={{ duration: 1.2, ease: 'easeOut' }}
-            className="text-center max-w-3xl px-4 flex flex-col items-center"
+            className={`text-center px-4 flex flex-col items-center ${aspectRatio === '9:16' ? 'max-w-sm' : 'max-w-3xl'}`}
           >
             <div className="text-[10px] md:text-xs font-mono tracking-[0.25em] text-gray-400 uppercase mb-2 md:mb-3 opacity-75">
               Arcano Revelado
             </div>
-            <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-serif text-[#D4AF37] mb-3 md:mb-4 tracking-widest drop-shadow-[0_0_30px_rgba(212,175,55,0.5)]">
+            <h1 className={`font-serif text-[#D4AF37] mb-3 md:mb-4 tracking-widest drop-shadow-[0_0_30px_rgba(212,175,55,0.5)] ${
+              aspectRatio === '9:16' ? 'text-2xl sm:text-3xl md:text-4xl' : 'text-3xl sm:text-4xl md:text-5xl lg:text-6xl'
+            }`}>
               {poem.title}
             </h1>
-            <p className="text-sm sm:text-base md:text-lg lg:text-xl text-gray-200 font-serif italic tracking-wide max-w-xl mb-4">
+            <p className={`text-gray-200 font-serif italic tracking-wide mb-4 ${
+              aspectRatio === '9:16' ? 'text-xs sm:text-sm max-w-xs' : 'text-sm sm:text-base md:text-lg lg:text-xl max-w-xl'
+            }`}>
               {poem.subtitle}
             </p>
 
@@ -262,10 +262,6 @@ export const CinematicReader: React.FC<CinematicReaderProps> = ({
                 />
               ))}
             </div>
-
-            <span className="text-[10px] md:text-[11px] text-gray-400 mt-4 font-sans tracking-widest uppercase opacity-40">
-              Toca o presiona [Espacio] para saltar
-            </span>
           </motion.div>
         )}
 
@@ -277,16 +273,18 @@ export const CinematicReader: React.FC<CinematicReaderProps> = ({
             animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
             exit={{ opacity: 0, y: -20, filter: 'blur(8px)', transition: { duration: 0.6 } }}
             transition={{ duration: 0.8, ease: 'easeOut' }}
-            className="text-center max-w-3xl px-4"
+            className={`text-center px-4 ${aspectRatio === '9:16' ? 'max-w-xs sm:max-w-sm' : 'max-w-3xl'}`}
           >
-            <div className="flex flex-wrap justify-center gap-x-2 md:gap-x-2.5 gap-y-1.5 text-lg sm:text-xl md:text-2xl lg:text-3xl font-serif leading-relaxed text-gray-100">
+            <div className={`flex flex-wrap justify-center gap-x-2 md:gap-x-2.5 gap-y-1.5 font-serif leading-relaxed text-gray-100 ${
+              aspectRatio === '9:16' ? 'text-base sm:text-lg md:text-xl' : 'text-lg sm:text-xl md:text-2xl lg:text-3xl'
+            }`}>
               {poem.lines[currentLineIndex].trim().split(/\s+/).map((word, wIdx) => {
                 const isRevealed = wIdx <= currentWordIndex;
                 const isCurrent = wIdx === currentWordIndex;
 
                 return (
                   <motion.span
-                    key={wIdx}
+                    key={`l-${currentLineIndex}-w-${wIdx}-${word}`}
                     animate={{
                       opacity: isCurrent ? 1 : isRevealed ? 0.95 : 0.65,
                       color: isCurrent ? '#D4AF37' : isRevealed ? '#FFFBEB' : '#E2E8F0',

@@ -208,7 +208,7 @@ export const VoiceSelectorModal: React.FC<VoiceSelectorModalProps> = ({
                   Cargando catálogo de voces del dispositivo...
                 </div>
               ) : (
-                displayedVoices.map((voice) => {
+                displayedVoices.map((voice, idx) => {
                   const isSelected = selectedVoiceURI === voice.voiceURI || selectedVoiceURI === voice.name;
                   const isTesting = testingURI === voice.voiceURI;
                   const isSpanish = voice.lang.startsWith('es');
@@ -216,7 +216,7 @@ export const VoiceSelectorModal: React.FC<VoiceSelectorModalProps> = ({
 
                   return (
                     <div
-                      key={voice.voiceURI || voice.name}
+                      key={`voice-${voice.voiceURI || voice.name}-${voice.lang}-${idx}`}
                       onClick={() => onSelectVoice(voice.voiceURI)}
                       className={`group relative p-3 rounded-xl sm:rounded-2xl transition-all border cursor-pointer flex items-center justify-between gap-3 ${
                         isSelected
@@ -328,6 +328,17 @@ export const VoiceSelectorModal: React.FC<VoiceSelectorModalProps> = ({
                     onChange={(e) => onSpeechPitchChange(parseFloat(e.target.value))}
                     className="w-full h-1.5 bg-white/20 rounded-lg appearance-none cursor-pointer accent-[#D4AF37]"
                   />
+                </div>
+              </div>
+
+              {/* Windows & System Voices Hint */}
+              <div className="mt-2.5 p-2 rounded-xl bg-white/[0.02] border border-[#D4AF37]/20 flex items-start gap-2 text-[10px] text-gray-400">
+                <span className="text-[#D4AF37] text-xs shrink-0 mt-0.5">✦</span>
+                <div className="leading-relaxed">
+                  <span className="text-amber-200/90 font-medium">¿Cómo añadir más voces en tu PC?</span>
+                  <p className="mt-0.5 text-gray-400">
+                    En tu ordenador ve a <strong>Configuración de Windows &gt; Hora e idioma &gt; Voz &gt; Agregar voces</strong> (instala español de España o México). También puedes abrir esta app en <strong>Microsoft Edge</strong> para acceder sin costo a las voces <em>Natural Neural</em> (Álvaro, Elvira, etc.).
+                  </p>
                 </div>
               </div>
             </div>

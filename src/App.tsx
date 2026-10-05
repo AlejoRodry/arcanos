@@ -28,6 +28,7 @@ import {
 import { circleInscriptions, CircleInscription, getNextCircleInscription } from './data/circleInscriptions';
 import { useScreenRecorder, AspectRatio } from './hooks/useScreenRecorder';
 import { StudioModal } from './components/StudioModal';
+import { masterAudioEngine } from './utils/audioEngine';
 
 type ThemeType = 'astrolabe' | 'cosmos';
 
@@ -172,29 +173,45 @@ export default function App() {
       if (!started) return;
     }
 
+    masterAudioEngine.unlock();
     setTheaterMode(true);
     setIsMobileDrawerOpen(false);
     setShowMobileVolumeSlider(false);
     
-    if (audioRef.current) {
+    if (!audioSrc && !isMuted) {
+      masterAudioEngine.startAmbientDrone();
+    }
+
+    if (audioRef.current && audioSrc) {
+      masterAudioEngine.attachMediaElement(audioRef.current);
       audioRef.current.volume = isMuted ? 0 : musicVolume * 0.25;
+      audioRef.current.play().catch(console.error);
     }
 
     speakPoem(selectedPoem, () => {
       setTheaterMode(false);
       stopRecording();
-      if (audioRef.current) {
+      masterAudioEngine.stopAmbientDrone();
+      if (audioRef.current && audioSrc) {
         audioRef.current.volume = isMuted ? 0 : musicVolume;
       }
     });
-  }, [theaterMode, selectedPoem, speakPoem, isMuted, musicVolume, autoRecordOnStart, isRecording, startRecording, stopRecording, aspectRatio]);
+  }, [theaterMode, selectedPoem, speakPoem, isMuted, musicVolume, autoRecordOnStart, isRecording, startRecording, stopRecording, aspectRatio, audioSrc]);
 
   const handleStartRecordingAndPoem = useCallback(async () => {
+    // 0. Unlock audio immediately on user click gesture so browser allows sound
+    masterAudioEngine.unlock();
+
     // 1. Enter theater mode and close modals first so layout is completely centered and idle
     setIsStudioModalOpen(false);
     setIsMobileDrawerOpen(false);
     setShowMobileVolumeSlider(false);
     setTheaterMode(true);
+
+    // If no custom music is uploaded, start ambient cosmic sound so music is never silent!
+    if (!audioSrc && !isMuted) {
+      masterAudioEngine.startAmbientDrone();
+    }
 
     // Brief 250ms pause so sidebar slides away and layout stabilizes at dead-center
     await new Promise(r => setTimeout(r, 250));
@@ -208,8 +225,10 @@ export default function App() {
     });
 
     if (started) {
-      if (audioRef.current) {
+      if (audioRef.current && audioSrc) {
+        masterAudioEngine.attachMediaElement(audioRef.current);
         audioRef.current.volume = isMuted ? 0 : musicVolume * 0.25;
+        audioRef.current.play().catch(console.error);
       }
 
       // Small pause to allow visual transition before recitation begins
@@ -217,25 +236,28 @@ export default function App() {
         speakPoem(selectedPoem, () => {
           setTheaterMode(false);
           stopRecording();
-          if (audioRef.current) {
+          masterAudioEngine.stopAmbientDrone();
+          if (audioRef.current && audioSrc) {
             audioRef.current.volume = isMuted ? 0 : musicVolume;
           }
         });
       }, 400);
     } else {
-      // User cancelled browser share prompt, revert theater mode
+      // User cancelled browser share prompt, revert theater mode & ambient
+      masterAudioEngine.stopAmbientDrone();
       setTheaterMode(false);
     }
-  }, [selectedPoem, aspectRatio, recordMode, startRecording, speakPoem, isMuted, musicVolume, stopRecording]);
+  }, [selectedPoem, aspectRatio, recordMode, audioSrc, isMuted, musicVolume, startRecording, speakPoem, stopRecording]);
 
   const handleStop = useCallback(() => {
     stop();
+    masterAudioEngine.stopAmbientDrone();
     setTheaterMode(false);
     stopRecording();
-    if (audioRef.current) {
+    if (audioRef.current && audioSrc) {
       audioRef.current.volume = isMuted ? 0 : musicVolume;
     }
-  }, [stop, isMuted, musicVolume, stopRecording]);
+  }, [stop, isMuted, musicVolume, stopRecording, audioSrc]);
 
   // Touch swipe gestures for mobile navigation
   const handleTouchStart = (e: React.TouchEvent) => {

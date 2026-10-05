@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { Poem } from '../types';
+import { masterAudioEngine } from '../utils/audioEngine';
 
 export type SpeechStage = 'idle' | 'hook' | 'title' | 'lines';
 
@@ -251,7 +252,7 @@ export const useSpeech = () => {
     return utterance;
   };
 
-  const speakText = useCallback((text: string, onStartCb: () => void, onEndCb: () => void) => {
+  const speakText = useCallback(async (text: string, onStartCb: () => void, onEndCb: () => void) => {
     const cleanText = text.trim();
     if (!cleanText) {
       onEndCb();
@@ -260,56 +261,40 @@ export const useSpeech = () => {
 
     const words = cleanText.split(/\s+/);
 
-    // Primary: HTML5 Audio stream via /api/tts
-    // Plays through tab audio so getDisplayMedia captures the narration in the video and audio recording
+    // Primary: Web Audio API direct digital stream via masterAudioEngine
+    // Feeds directly into user speakers AND the recording bus with 100% digital fidelity
     try {
-      if (!audioElementRef.current) {
-        audioElementRef.current = new Audio();
-      }
-      const audio = audioElementRef.current;
-      audio.pause();
-      audio.src = `/api/tts?text=${encodeURIComponent(cleanText)}`;
-
-      let started = false;
-      audio.onplay = () => {
-        started = true;
-        onStartCb();
-        clearTimers();
-        setCurrentWordIndex(0);
-      };
-
-      audio.ontimeupdate = () => {
-        if (audio.duration && !isNaN(audio.duration) && audio.duration > 0) {
-          const progress = audio.currentTime / audio.duration;
+      const success = await masterAudioEngine.playNarration(
+        cleanText,
+        () => {
+          onStartCb();
+          clearTimers();
+          setCurrentWordIndex(0);
+        },
+        () => {
+          clearTimers();
+          setCurrentWordIndex(words.length);
+          if (!isSkippingRef.current) {
+            onEndCb();
+          }
+        },
+        (progress) => {
           const targetIndex = Math.min(words.length - 1, Math.floor(progress * words.length));
           setCurrentWordIndex(targetIndex);
         }
-      };
+      );
 
-      audio.onended = () => {
-        clearTimers();
-        setCurrentWordIndex(words.length);
-        if (!isSkippingRef.current) {
-          onEndCb();
-        }
-      };
+      if (success) {
+        return;
+      }
+    } catch (engineErr) {
+      console.warn("masterAudioEngine playback error, using fallback:", engineErr);
+    }
 
-      audio.onerror = () => {
-        if (!started) {
-          console.warn("TTS audio failed, using Web Speech API fallback");
-          const utterance = createUtterance(cleanText, onStartCb, onEndCb);
-          if (window.speechSynthesis) window.speechSynthesis.speak(utterance);
-        }
-      };
-
-      audio.play().catch(err => {
-        console.warn("Audio autoplay blocked or error, falling back to speech synthesis:", err);
-        const utterance = createUtterance(cleanText, onStartCb, onEndCb);
-        if (window.speechSynthesis) window.speechSynthesis.speak(utterance);
-      });
-    } catch (e) {
-      const utterance = createUtterance(cleanText, onStartCb, onEndCb);
-      if (window.speechSynthesis) window.speechSynthesis.speak(utterance);
+    // Secondary Fallback: Web Speech API
+    const utterance = createUtterance(cleanText, onStartCb, onEndCb);
+    if (window.speechSynthesis) {
+      window.speechSynthesis.speak(utterance);
     }
   }, [voices]);
 
@@ -407,6 +392,7 @@ export const useSpeech = () => {
   const stop = useCallback(() => {
     isSkippingRef.current = true;
     clearTimers();
+    masterAudioEngine.stopNarration();
     if (audioElementRef.current) {
       audioElementRef.current.pause();
       audioElementRef.current.currentTime = 0;
@@ -426,6 +412,7 @@ export const useSpeech = () => {
 
     isSkippingRef.current = true;
     clearTimers();
+    masterAudioEngine.stopNarration();
     if (audioElementRef.current) {
       audioElementRef.current.pause();
       audioElementRef.current.currentTime = 0;

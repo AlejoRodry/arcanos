@@ -6,6 +6,7 @@ import {
   deleteRecordingFromDB, 
   clearAllRecordingsFromDB 
 } from '../utils/recordingsDB';
+import { masterAudioEngine } from '../utils/audioEngine';
 
 export type AspectRatio = 'free' | '9:16' | '16:9' | '1:1';
 export type RecordMode = 'video' | 'audio';
@@ -179,17 +180,30 @@ export const useScreenRecorder = () => {
       let selectedMime = '';
       let recorderOptions: MediaRecorderOptions = {};
 
+      // Direct digital master audio stream from our internal audio engine (voice + ambient music)
+      const internalAudioStream = masterAudioEngine.getRecordingAudioStream();
+      const internalAudioTrack = internalAudioStream.getAudioTracks()[0];
+
       if (activeMode === 'audio') {
         // ============================================================
         // AUDIO-ONLY EXTRACTION (0% GPU/CPU overhead, 100% fluid)
+        // Direct digital capture of voice narration and mystic music
         // ============================================================
-        const audioTracks = rawStream.getAudioTracks();
-        if (audioTracks.length === 0) {
-          throw new Error("No se detectó audio en la pestaña. Asegúrate de marcar la casilla 'Compartir audio' en el diálogo del navegador.");
+        const tracksToRecord: MediaStreamTrack[] = [];
+        if (internalAudioTrack) {
+          tracksToRecord.push(internalAudioTrack);
+        }
+        rawStream.getAudioTracks().forEach(t => {
+          if (!tracksToRecord.some(existing => existing.id === t.id)) {
+            tracksToRecord.push(t);
+          }
+        });
+
+        if (tracksToRecord.length === 0) {
+          throw new Error("No se pudo iniciar el canal de audio del oráculo.");
         }
 
-        // Only record the audio tracks so video is completely omitted
-        recordingStream = new MediaStream(audioTracks);
+        recordingStream = new MediaStream(tracksToRecord);
 
         const audioTypes = [
           'audio/webm;codecs=opus',
@@ -274,8 +288,16 @@ export const useScreenRecorder = () => {
             animId = requestAnimationFrame(renderLoop);
 
             const croppedStream = (cropCanvas as any).captureStream(30) as MediaStream;
-            // Transfer audio tracks
-            rawStream.getAudioTracks().forEach(track => croppedStream.addTrack(track));
+            // Transfer internal digital audio track (voice narration + ambient music)
+            if (internalAudioTrack) {
+              croppedStream.addTrack(internalAudioTrack);
+            }
+            // Also transfer any raw audio tracks from screen capture if present
+            rawStream.getAudioTracks().forEach(track => {
+              if (!croppedStream.getAudioTracks().some(t => t.id === track.id)) {
+                croppedStream.addTrack(track);
+              }
+            });
             recordingStream = croppedStream;
 
             stopCroppingRef.current = () => {

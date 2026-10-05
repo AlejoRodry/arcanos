@@ -163,8 +163,14 @@ export const useScreenRecorder = () => {
 
       // Handle user stopping screen share from browser banner
       const rawVideoTrack = rawStream.getVideoTracks()[0];
-      if (rawVideoTrack) {
+      if (rawVideoTrack && activeMode === 'video') {
         rawVideoTrack.onended = () => {
+          stopRecording();
+        };
+      }
+      const rawAudioTrack = rawStream.getAudioTracks()[0];
+      if (rawAudioTrack && activeMode === 'audio') {
+        rawAudioTrack.onended = () => {
           stopRecording();
         };
       }
@@ -182,9 +188,7 @@ export const useScreenRecorder = () => {
           throw new Error("No se detectó audio en la pestaña. Asegúrate de marcar la casilla 'Compartir audio' en el diálogo del navegador.");
         }
 
-        // Stop video tracks immediately so CPU doesn't process frames
-        rawStream.getVideoTracks().forEach(track => track.stop());
-
+        // Only record the audio tracks so video is completely omitted
         recordingStream = new MediaStream(audioTracks);
 
         const audioTypes = [

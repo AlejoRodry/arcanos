@@ -18,6 +18,39 @@ export default defineConfig(({ command }) => {
     plugins: [
       react(),
       tailwindcss(),
+      {
+        name: 'tts-api-server',
+        configureServer(server) {
+          server.middlewares.use('/api/tts', async (req, res) => {
+            try {
+              const url = new URL(req.url || '', 'http://localhost');
+              const text = url.searchParams.get('text');
+              if (!text) {
+                res.statusCode = 400;
+                res.end(JSON.stringify({ error: 'Text parameter required' }));
+                return;
+              }
+
+              const ttsUrl = `https://translate.google.com/translate_tts?ie=UTF-8&tl=es&client=tw-ob&q=${encodeURIComponent(text)}`;
+              const response = await fetch(ttsUrl);
+              if (!response.ok) {
+                res.statusCode = response.status;
+                res.end('Failed to fetch TTS');
+                return;
+              }
+
+              res.setHeader('Content-Type', 'audio/mpeg');
+              res.setHeader('Cache-Control', 'public, max-age=86400');
+              const buffer = await response.arrayBuffer();
+              res.end(Buffer.from(buffer));
+            } catch (err) {
+              console.error('TTS middleware error:', err);
+              res.statusCode = 500;
+              res.end('TTS error');
+            }
+          });
+        }
+      },
       VitePWA({
         registerType: 'autoUpdate',
         includeAssets: ['icon.svg', 'apple-touch-icon.png', 'pwa-192x192.png', 'pwa-512x512.png', 'pwa-maskable-512x512.png'],

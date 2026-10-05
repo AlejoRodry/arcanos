@@ -76,6 +76,7 @@ export const useSpeech = () => {
   const onCompleteRef = useRef<(() => void) | null>(null);
   const wordTimersRef = useRef<NodeJS.Timeout[]>([]);
   const stageTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const audioElementRef = useRef<HTMLAudioElement | null>(null);
 
   const selectedVoiceURIRef = useRef<string | null>(selectedVoiceURI);
   const speechRateRef = useRef<number>(speechRate);
@@ -250,14 +251,75 @@ export const useSpeech = () => {
     return utterance;
   };
 
-  const speakPoem = useCallback((poem: Poem, onComplete: () => void) => {
-    if (!window.speechSynthesis) {
-      console.warn("Speech Synthesis not supported");
-      onComplete();
+  const speakText = useCallback((text: string, onStartCb: () => void, onEndCb: () => void) => {
+    const cleanText = text.trim();
+    if (!cleanText) {
+      onEndCb();
       return;
     }
 
-    window.speechSynthesis.cancel();
+    const words = cleanText.split(/\s+/);
+
+    // Primary: HTML5 Audio stream via /api/tts
+    // Plays through tab audio so getDisplayMedia captures the narration in the video and audio recording
+    try {
+      if (!audioElementRef.current) {
+        audioElementRef.current = new Audio();
+      }
+      const audio = audioElementRef.current;
+      audio.pause();
+      audio.src = `/api/tts?text=${encodeURIComponent(cleanText)}`;
+
+      let started = false;
+      audio.onplay = () => {
+        started = true;
+        onStartCb();
+        clearTimers();
+        setCurrentWordIndex(0);
+      };
+
+      audio.ontimeupdate = () => {
+        if (audio.duration && !isNaN(audio.duration) && audio.duration > 0) {
+          const progress = audio.currentTime / audio.duration;
+          const targetIndex = Math.min(words.length - 1, Math.floor(progress * words.length));
+          setCurrentWordIndex(targetIndex);
+        }
+      };
+
+      audio.onended = () => {
+        clearTimers();
+        setCurrentWordIndex(words.length);
+        if (!isSkippingRef.current) {
+          onEndCb();
+        }
+      };
+
+      audio.onerror = () => {
+        if (!started) {
+          console.warn("TTS audio failed, using Web Speech API fallback");
+          const utterance = createUtterance(cleanText, onStartCb, onEndCb);
+          if (window.speechSynthesis) window.speechSynthesis.speak(utterance);
+        }
+      };
+
+      audio.play().catch(err => {
+        console.warn("Audio autoplay blocked or error, falling back to speech synthesis:", err);
+        const utterance = createUtterance(cleanText, onStartCb, onEndCb);
+        if (window.speechSynthesis) window.speechSynthesis.speak(utterance);
+      });
+    } catch (e) {
+      const utterance = createUtterance(cleanText, onStartCb, onEndCb);
+      if (window.speechSynthesis) window.speechSynthesis.speak(utterance);
+    }
+  }, [voices]);
+
+  const speakPoem = useCallback((poem: Poem, onComplete: () => void) => {
+    if (audioElementRef.current) {
+      audioElementRef.current.pause();
+    }
+    if (window.speechSynthesis) {
+      window.speechSynthesis.cancel();
+    }
     clearTimers();
 
     currentPoemRef.current = poem;
@@ -271,21 +333,18 @@ export const useSpeech = () => {
       setCurrentLineIndex(-1);
       setCurrentWordIndex(0);
 
-      const utterance = createUtterance(
+      speakText(
         poem.hook,
         () => {
           setSpeechStage('hook');
           setCurrentWordIndex(0);
         },
         () => {
-          // Pause dramatically after the question before showing title
           stageTimeoutRef.current = setTimeout(() => {
             speakTitle();
           }, 1000);
         }
       );
-
-      window.speechSynthesis.speak(utterance);
     };
 
     // --- STEP 2: SPEAK TITLE & SUBTITLE ---
@@ -298,21 +357,18 @@ export const useSpeech = () => {
       const cleanTitle = poem.title.replace(/^[0-9IVXLCDM]+\.\s*/i, '').trim();
       const titleSpeechText = `${cleanTitle}. ${poem.subtitle}.`;
 
-      const utterance = createUtterance(
+      speakText(
         titleSpeechText,
         () => {
           setSpeechStage('title');
           setCurrentWordIndex(0);
         },
         () => {
-          // Pause before recitation starts
           stageTimeoutRef.current = setTimeout(() => {
             speakLines(0);
           }, 1200);
         }
       );
-
-      window.speechSynthesis.speak(utterance);
     };
 
     // --- STEP 3: SPEAK VERSES LINE BY LINE ---
@@ -331,29 +387,30 @@ export const useSpeech = () => {
       setCurrentWordIndex(0);
 
       const text = poem.lines[lineIdx];
-      const utterance = createUtterance(
+      speakText(
         text,
         () => {
           setCurrentLineIndex(lineIdx);
           setCurrentWordIndex(0);
         },
         () => {
-          // Short breathing pause between poem verses
           stageTimeoutRef.current = setTimeout(() => {
             speakLines(lineIdx + 1);
           }, 900);
         }
       );
-
-      window.speechSynthesis.speak(utterance);
     };
 
     speakHook();
-  }, [voices]);
+  }, [speakText]);
 
   const stop = useCallback(() => {
     isSkippingRef.current = true;
     clearTimers();
+    if (audioElementRef.current) {
+      audioElementRef.current.pause();
+      audioElementRef.current.currentTime = 0;
+    }
     if (window.speechSynthesis) {
       window.speechSynthesis.cancel();
     }
@@ -369,6 +426,10 @@ export const useSpeech = () => {
 
     isSkippingRef.current = true;
     clearTimers();
+    if (audioElementRef.current) {
+      audioElementRef.current.pause();
+      audioElementRef.current.currentTime = 0;
+    }
     if (window.speechSynthesis) {
       window.speechSynthesis.cancel();
     }
@@ -380,7 +441,7 @@ export const useSpeech = () => {
         setSpeechStage('title');
         const cleanTitle = poem.title.replace(/^[0-9IVXLCDM]+\.\s*/i, '').trim();
         const titleSpeechText = `${cleanTitle}. ${poem.subtitle}.`;
-        const utterance = createUtterance(
+        speakText(
           titleSpeechText,
           () => {
             setSpeechStage('title');
@@ -399,7 +460,7 @@ export const useSpeech = () => {
                   setSpeechStage('lines');
                   setCurrentLineIndex(idx);
                   setCurrentWordIndex(0);
-                  const u = createUtterance(
+                  speakText(
                     poem.lines[idx], 
                     () => {
                       setCurrentLineIndex(idx);
@@ -409,14 +470,12 @@ export const useSpeech = () => {
                       stageTimeoutRef.current = setTimeout(() => startFirstLine(idx + 1), 900);
                     }
                   );
-                  window.speechSynthesis.speak(u);
                 };
                 startFirstLine(0);
               }
             }, 1200);
           }
         );
-        window.speechSynthesis.speak(utterance);
       } else if (speechStage === 'title') {
         // Skip from title to lines
         setSpeechStage('lines');
@@ -432,7 +491,7 @@ export const useSpeech = () => {
           setSpeechStage('lines');
           setCurrentLineIndex(idx);
           setCurrentWordIndex(0);
-          const u = createUtterance(
+          speakText(
             poem.lines[idx], 
             () => {
               setCurrentLineIndex(idx);
@@ -442,7 +501,6 @@ export const useSpeech = () => {
               stageTimeoutRef.current = setTimeout(() => startFirstLine(idx + 1), 900);
             }
           );
-          window.speechSynthesis.speak(u);
         };
         startFirstLine(0);
       } else if (speechStage === 'lines') {
@@ -464,7 +522,7 @@ export const useSpeech = () => {
             setSpeechStage('lines');
             setCurrentLineIndex(idx);
             setCurrentWordIndex(0);
-            const u = createUtterance(
+            speakText(
               poem.lines[idx], 
               () => {
                 setCurrentLineIndex(idx);
@@ -474,13 +532,12 @@ export const useSpeech = () => {
                 stageTimeoutRef.current = setTimeout(() => startLine(idx + 1), 900);
               }
             );
-            window.speechSynthesis.speak(u);
           };
           startLine(nextIdx);
         }
       }
     }, 60);
-  }, [isSpeaking, speechStage, stop]);
+  }, [isSpeaking, speechStage, currentLineIndex, speakText, stop]);
 
   return {
     isSpeaking,

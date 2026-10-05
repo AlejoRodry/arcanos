@@ -47,12 +47,14 @@ export default function App() {
     durationFormatted,
     videoUrl,
     aspectRatio,
+    recordMode,
     autoRecordOnStart,
     savedRecordings,
     lastSavedRecording,
     recordingError,
     clearRecordingError,
     setAspectRatio,
+    setRecordMode,
     setAutoRecordOnStart,
     startRecording,
     stopRecording,
@@ -197,11 +199,12 @@ export default function App() {
     // Brief 250ms pause so sidebar slides away and layout stabilizes at dead-center
     await new Promise(r => setTimeout(r, 250));
 
-    // 2. Initialize screen or canvas capture on the already centered view
+    // 2. Initialize screen, canvas, or audio capture on the already centered view
     const started = await startRecording({
       poemId: selectedPoem.id,
       poemTitle: selectedPoem.title,
-      aspectRatio
+      aspectRatio,
+      recordMode
     });
 
     if (started) {
@@ -223,7 +226,7 @@ export default function App() {
       // User cancelled browser share prompt, revert theater mode
       setTheaterMode(false);
     }
-  }, [selectedPoem, aspectRatio, startRecording, speakPoem, isMuted, musicVolume, stopRecording]);
+  }, [selectedPoem, aspectRatio, recordMode, startRecording, speakPoem, isMuted, musicVolume, stopRecording]);
 
   const handleStop = useCallback(() => {
     stop();
@@ -1267,6 +1270,8 @@ export default function App() {
             onClose={() => setIsStudioModalOpen(false)}
             aspectRatio={aspectRatio}
             onSelectAspectRatio={setAspectRatio}
+            recordMode={recordMode}
+            onSelectRecordMode={setRecordMode}
             isRecording={isRecording}
             recordingDuration={durationFormatted}
             autoRecordOnStart={autoRecordOnStart}

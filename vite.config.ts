@@ -6,11 +6,8 @@ import { VitePWA } from 'vite-plugin-pwa';
 
 export default defineConfig(({ command }) => {
   const isDev = command === 'serve';
-  const githubRepo = process.env.GITHUB_REPOSITORY
-    ? `/${process.env.GITHUB_REPOSITORY.split('/')[1]}/`
-    : '/arcanos/';
-  
-  const rawBase = process.env.BASE_PATH || (isDev ? '/' : githubRepo);
+  // Default to '/' for AI Studio / Cloud Run / custom domain / root deployment
+  const rawBase = process.env.BASE_PATH || (process.env.GITHUB_REPOSITORY ? `/${process.env.GITHUB_REPOSITORY.split('/')[1]}/` : '/');
   const basePath = rawBase.endsWith('/') ? rawBase : `${rawBase}/`;
 
   return {
@@ -53,7 +50,7 @@ export default defineConfig(({ command }) => {
       },
       VitePWA({
         registerType: 'autoUpdate',
-        includeAssets: ['icon.svg', 'apple-touch-icon.png', 'pwa-192x192.png', 'pwa-512x512.png', 'pwa-maskable-512x512.png'],
+        includeAssets: ['favicon.ico', 'icon.svg', 'apple-touch-icon.png', 'pwa-192x192.png', 'pwa-512x512.png', 'pwa-maskable-192x192.png', 'pwa-maskable-512x512.png'],
         manifest: {
           id: basePath,
           name: 'Arcanos: Lectura Cinemática',
@@ -79,6 +76,12 @@ export default defineConfig(({ command }) => {
               sizes: '512x512',
               type: 'image/png',
               purpose: 'any',
+            },
+            {
+              src: `${basePath}pwa-maskable-192x192.png`,
+              sizes: '192x192',
+              type: 'image/png',
+              purpose: 'maskable',
             },
             {
               src: `${basePath}pwa-maskable-512x512.png`,

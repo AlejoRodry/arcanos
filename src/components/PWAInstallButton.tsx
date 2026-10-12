@@ -36,10 +36,18 @@ export const RadiantInstallModal: React.FC<InstallModalProps> = ({
   onClose,
   isInstallable,
   isInAppBrowser,
+  isAndroid,
+  isIOS,
   onInstall,
   statusMsg
 }) => {
-  const [activeTab, setActiveTab] = useState<'android' | 'ios' | 'status'>('android');
+  const [activeTab, setActiveTab] = useState<'android' | 'ios' | 'status'>(isIOS ? 'ios' : 'android');
+
+  React.useEffect(() => {
+    if (isOpen) {
+      setActiveTab(isIOS ? 'ios' : 'android');
+    }
+  }, [isOpen, isIOS]);
 
   if (!isOpen) return null;
 
@@ -86,13 +94,13 @@ export const RadiantInstallModal: React.FC<InstallModalProps> = ({
               <AlertTriangle size={18} className="text-[#D4AF37] shrink-0 mt-0.5" />
               <div className="space-y-1">
                 <p className="font-semibold text-[#F3E5AB]">
-                  Abierto dentro de una app (WhatsApp o Correo)
+                  Navegador integrado detectado
                 </p>
                 <p className="text-[11px] text-gray-300 leading-relaxed font-sans">
-                  Los navegadores integrados bloquean la instalación. Para guardarla en tu teléfono:
+                  Las apps como WhatsApp, Instagram o Gmail bloquean la instalación de PWAs.
                 </p>
                 <p className="text-[11px] font-medium text-[#D4AF37]">
-                  👉 Toca los tres puntos (⋮) en la esquina y selecciona <strong>«Abrir en Chrome»</strong>.
+                  👉 Toca los tres puntos (⋮) o el icono de brújula/compartir y selecciona <strong>«Abrir en Chrome»</strong> (Android) o <strong>«Abrir en Safari»</strong> (iPhone).
                 </p>
               </div>
             </div>
@@ -359,7 +367,7 @@ export const PWAInstallButton: React.FC<PWAInstallButtonProps> = ({
           aria-label="Instalar aplicación"
         >
           <Download size={12} className="text-[#D4AF37] animate-pulse" />
-          <span className="hidden sm:inline text-[10px] sm:text-[11px] font-serif font-semibold tracking-wider uppercase">
+          <span className="text-[10px] sm:text-[11px] font-serif font-semibold tracking-wider uppercase">
             Instalar
           </span>
         </button>

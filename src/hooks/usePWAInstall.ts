@@ -17,14 +17,16 @@ export function usePWAInstall() {
     // Detect standalone mode (already installed as PWA)
     const isStandalone =
       window.matchMedia('(display-mode: standalone)').matches ||
-      (window.navigator as unknown as { standalone?: boolean }).standalone === true ||
-      document.referrer.includes('android-app://');
+      window.matchMedia('(display-mode: fullscreen)').matches ||
+      (window.navigator as unknown as { standalone?: boolean }).standalone === true;
     setIsInstalled(isStandalone);
 
     const userAgent = (window.navigator.userAgent || '').toLowerCase();
     
-    // Detect iOS devices
-    const isIOSDevice = /iphone|ipad|ipod/.test(userAgent);
+    // Detect iOS devices (iPhone, iPad, iPod, iPadOS)
+    const isIOSDevice = 
+      /iphone|ipad|ipod/.test(userAgent) ||
+      (typeof navigator !== 'undefined' && navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
     setIsIOS(isIOSDevice);
 
     // Detect Android devices

@@ -2,7 +2,7 @@ import React from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Poem } from '../types';
 import { SpeechStage } from '../hooks/useSpeech';
-import { Sparkles, Compass, Play, ChevronLeft, ChevronRight, Mic, Info } from 'lucide-react';
+import { Sparkles, Compass, Play, ChevronLeft, ChevronRight, Mic, Info, Edit3 } from 'lucide-react';
 
 interface CinematicReaderProps {
   poem: Poem;
@@ -18,6 +18,7 @@ interface CinematicReaderProps {
   onNext?: () => void;
   onOpenVoiceModal?: () => void;
   onOpenInscriptionModal?: () => void;
+  onEditPoem?: () => void;
   activeVoiceName?: string;
   aspectRatio?: 'free' | '9:16' | '16:9' | '1:1';
 }
@@ -35,6 +36,7 @@ export const CinematicReader: React.FC<CinematicReaderProps> = ({
   onNext,
   onOpenVoiceModal,
   onOpenInscriptionModal,
+  onEditPoem,
   activeVoiceName,
   aspectRatio = 'free'
 }) => {
@@ -121,7 +123,7 @@ export const CinematicReader: React.FC<CinematicReaderProps> = ({
                 </button>
               </div>
 
-              {/* Quick Options Pills Row (Voz & Círculo Sagrado) */}
+              {/* Quick Options Pills Row (Voz, Círculo Sagrado & Editar) */}
               <div className="flex items-center justify-center gap-2 w-full pt-1">
                 {onOpenVoiceModal && (
                   <button
@@ -141,14 +143,39 @@ export const CinematicReader: React.FC<CinematicReaderProps> = ({
                     title="Ver sentencia del círculo sagrado"
                   >
                     <Info size={13} className="text-[#D4AF37] shrink-0" />
-                    <span className="text-[11px] font-sans truncate">Círculo Sagrado</span>
+                    <span className="text-[11px] font-sans truncate">Círculo</span>
+                  </button>
+                )}
+
+                {onEditPoem && (
+                  <button
+                    onClick={onEditPoem}
+                    className="flex-1 flex items-center justify-center gap-1.5 py-2 px-2.5 rounded-xl bg-[#D4AF37]/10 border border-[#D4AF37]/30 hover:border-[#D4AF37]/60 hover:bg-[#D4AF37]/20 text-xs text-[#D4AF37] active:scale-95 transition-all shadow-sm"
+                    title="Editar poema de este arcano"
+                  >
+                    <Edit3 size={13} className="text-[#D4AF37] shrink-0" />
+                    <span className="text-[11px] font-sans font-medium truncate">Editar</span>
                   </button>
                 )}
               </div>
             </div>
 
+            {/* Desktop Actions Row */}
+            <div className="hidden md:flex items-center gap-3 mt-3 pointer-events-auto">
+              {onEditPoem && (
+                <button
+                  onClick={onEditPoem}
+                  className="px-3.5 py-1.5 rounded-xl border border-white/15 bg-white/[0.04] hover:bg-[#D4AF37]/15 hover:border-[#D4AF37]/50 text-xs font-serif text-gray-300 hover:text-[#D4AF37] transition-all flex items-center gap-1.5 shadow-sm active:scale-95 cursor-pointer"
+                  title="Editar este poema (título, versos, pregunta del umbral)"
+                >
+                  <Edit3 size={13} className="text-[#D4AF37]" />
+                  <span>Editar Poema</span>
+                </button>
+              )}
+            </div>
+
             {/* Keyboard hints (Desktop Only) */}
-            <div className="hidden md:flex mt-1.5 text-[10px] font-sans tracking-wider text-gray-500 uppercase items-center gap-2">
+            <div className="hidden md:flex mt-2 text-[10px] font-sans tracking-wider text-gray-500 uppercase items-center gap-2">
               <span className="px-1.5 py-0.5 rounded border border-white/10 bg-white/5 text-[9px]">Espacio / Enter</span>
               <span>Iniciar</span>
               <span className="opacity-40">•</span>

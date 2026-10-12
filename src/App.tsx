@@ -6,7 +6,8 @@ import { VoiceSelectorModal } from './components/VoiceSelectorModal';
 import { PWAInstallButton } from './components/PWAInstallButton';
 import { OfflineIndicator } from './components/OfflineIndicator';
 import { useSpeech } from './hooks/useSpeech';
-import { poems } from './data/poems';
+import { poems, defaultPoems } from './data/poems';
+import { Poem } from './types';
 import { 
   Play, 
   X, 
@@ -23,17 +24,35 @@ import {
   Volume1,
   Mic,
   Video,
-  FolderDown
+  FolderDown,
+  Edit3
 } from 'lucide-react';
 import { circleInscriptions, CircleInscription, getNextCircleInscription } from './data/circleInscriptions';
 import { useScreenRecorder, AspectRatio } from './hooks/useScreenRecorder';
 import { StudioModal } from './components/StudioModal';
+import { PoemEditorModal } from './components/PoemEditorModal';
 import { masterAudioEngine } from './utils/audioEngine';
 
 type ThemeType = 'astrolabe' | 'cosmos';
 
 export default function App() {
-  const [selectedPoemId, setSelectedPoemId] = useState<string>(poems[0].id);
+  const [poemsList, setPoemsList] = useState<Poem[]>(() => {
+    try {
+      const saved = localStorage.getItem('radiant_custom_poems');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          return parsed;
+        }
+      }
+    } catch (e) {
+      console.warn("Could not load custom poems from localStorage:", e);
+    }
+    return defaultPoems;
+  });
+
+  const [selectedPoemId, setSelectedPoemId] = useState<string>(() => (poemsList[0]?.id || defaultPoems[0].id));
+  const [isPoemEditorOpen, setIsPoemEditorOpen] = useState(false);
   const [theaterMode, setTheaterMode] = useState(false);
   const [theme, setTheme] = useState<ThemeType>('astrolabe');
   const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState(false);
@@ -41,6 +60,84 @@ export default function App() {
   const [isInscriptionModalOpen, setIsInscriptionModalOpen] = useState(false);
   const [isVoiceModalOpen, setIsVoiceModalOpen] = useState(false);
   const [isStudioModalOpen, setIsStudioModalOpen] = useState(false);
+
+  const [poemToast, setPoemToast] = useState<string | null>(null);
+
+  const showPoemToast = (msg: string) => {
+    setPoemToast(msg);
+    setTimeout(() => setPoemToast(null), 3000);
+  };
+
+  const handleSavePoem = useCallback((updatedPoem: Poem) => {
+    setPoemsList(prev => {
+      const exists = prev.some(p => p.id === updatedPoem.id);
+      const next = exists 
+        ? prev.map(p => p.id === updatedPoem.id ? updatedPoem : p)
+        : [...prev, updatedPoem];
+      localStorage.setItem('radiant_custom_poems', JSON.stringify(next));
+      return next;
+    });
+    showPoemToast(`✓ Arcano "${updatedPoem.title}" guardado con éxito`);
+  }, []);
+
+  const handleResetPoemToDefault = useCallback((poemId: string) => {
+    const orig = defaultPoems.find(p => p.id === poemId);
+    if (orig) {
+      setPoemsList(prev => {
+        const next = prev.map(p => p.id === poemId ? orig : p);
+        localStorage.setItem('radiant_custom_poems', JSON.stringify(next));
+        return next;
+      });
+      showPoemToast(`✓ Arcano "${orig.title}" restablecido`);
+    }
+  }, []);
+
+  const handleResetAllPoems = useCallback(() => {
+    setPoemsList(defaultPoems);
+    localStorage.setItem('radiant_custom_poems', JSON.stringify(defaultPoems));
+    showPoemToast('✓ Toda la colección ha sido restablecida al original');
+  }, []);
+
+  const handleCreateNewPoem = useCallback(() => {
+    const newId = `arcano-custom-${Date.now()}`;
+    const newPoem: Poem = {
+      id: newId,
+      title: `XXII. Arcano Personalizado ${poemsList.length + 1}`,
+      subtitle: "La voz del buscador de misterios",
+      hook: "¿Qué revelación aguarda en el silencio de este nuevo camino?",
+      lines: [
+        "Un nuevo arcano despierta entre las sombras del cosmos,",
+        "las estrellas susurran versos que solo tu alma comprende,",
+        "camina con fe hacia la luz de tu propia creación."
+      ]
+    };
+    const nextList = [...poemsList, newPoem];
+    setPoemsList(nextList);
+    localStorage.setItem('radiant_custom_poems', JSON.stringify(nextList));
+    setSelectedPoemId(newId);
+    showPoemToast(`✓ Nuevo arcano creado`);
+  }, [poemsList]);
+
+  const handleDeletePoem = useCallback((id: string) => {
+    setPoemsList(prev => {
+      const nextList = prev.filter(p => p.id !== id);
+      localStorage.setItem('radiant_custom_poems', JSON.stringify(nextList));
+      if (selectedPoemId === id && nextList.length > 0) {
+        setSelectedPoemId(nextList[0].id);
+      }
+      return nextList;
+    });
+    showPoemToast('✓ Arcano eliminado');
+  }, [selectedPoemId]);
+
+  const handleImportPoems = useCallback((imported: Poem[]) => {
+    setPoemsList(imported);
+    localStorage.setItem('radiant_custom_poems', JSON.stringify(imported));
+    if (imported.length > 0) {
+      setSelectedPoemId(imported[0].id);
+    }
+    showPoemToast(`✓ Se importaron ${imported.length} arcanos con éxito`);
+  }, []);
 
   // Screen & Audio Recorder with Aspect Ratio & Persistent Storage
   const {
@@ -108,8 +205,8 @@ export default function App() {
     setCurrentInscription(circleInscriptions[nextIdx]);
   };
 
-  const selectedPoem = poems.find(p => p.id === selectedPoemId) || poems[0];
-  const currentIndex = poems.findIndex(p => p.id === selectedPoemId);
+  const selectedPoem = poemsList.find(p => p.id === selectedPoemId) || poemsList[0];
+  const currentIndex = poemsList.findIndex(p => p.id === selectedPoemId);
 
   const activeVoice = voices.find(v => v.voiceURI === selectedVoiceURI || v.name === selectedVoiceURI);
   const activeVoiceName = activeVoice 
@@ -273,12 +370,12 @@ export default function App() {
     if (Math.abs(diff) > 45) {
       if (diff > 0) {
         // Swiped left -> Next arcano
-        const nextIndex = (currentIndex + 1) % poems.length;
-        setSelectedPoemId(poems[nextIndex].id);
+        const nextIndex = (currentIndex + 1) % poemsList.length;
+        setSelectedPoemId(poemsList[nextIndex].id);
       } else {
         // Swiped right -> Previous arcano
-        const prevIndex = (currentIndex - 1 + poems.length) % poems.length;
-        setSelectedPoemId(poems[prevIndex].id);
+        const prevIndex = (currentIndex - 1 + poemsList.length) % poemsList.length;
+        setSelectedPoemId(poemsList[prevIndex].id);
       }
     }
     touchStartX.current = null;
@@ -287,6 +384,11 @@ export default function App() {
   // Keyboard Shortcuts
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      const activeTag = document.activeElement?.tagName || '';
+      if (['INPUT', 'TEXTAREA', 'SELECT'].includes(activeTag) || isPoemEditorOpen) {
+        return;
+      }
+
       if (theaterMode) {
         if (e.key === 'Escape') {
           e.preventDefault();
@@ -301,19 +403,19 @@ export default function App() {
           handleStart();
         } else if (e.key === 'ArrowDown' || e.key === 'ArrowRight') {
           e.preventDefault();
-          const nextIndex = (currentIndex + 1) % poems.length;
-          setSelectedPoemId(poems[nextIndex].id);
+          const nextIndex = (currentIndex + 1) % poemsList.length;
+          setSelectedPoemId(poemsList[nextIndex].id);
         } else if (e.key === 'ArrowUp' || e.key === 'ArrowLeft') {
           e.preventDefault();
-          const prevIndex = (currentIndex - 1 + poems.length) % poems.length;
-          setSelectedPoemId(poems[prevIndex].id);
+          const prevIndex = (currentIndex - 1 + poemsList.length) % poemsList.length;
+          setSelectedPoemId(poemsList[prevIndex].id);
         }
       }
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [theaterMode, currentIndex, handleStart, handleStop, skip]);
+  }, [theaterMode, currentIndex, handleStart, handleStop, skip, poemsList, isPoemEditorOpen]);
 
   // Cleanup on unmount
   useEffect(() => {
@@ -728,6 +830,15 @@ export default function App() {
                     <Info size={14} />
                   </button>
 
+                  {/* Editor de Poemas Trigger */}
+                  <button
+                    onClick={() => setIsPoemEditorOpen(true)}
+                    className="w-7 h-7 flex items-center justify-center text-[#D4AF37]/80 hover:text-[#D4AF37] transition-all rounded-lg bg-white/[0.03] hover:bg-[#D4AF37]/15 border border-white/10 hover:border-[#D4AF37]/40 active:scale-95 shadow-sm cursor-pointer"
+                    title="Editar Poemas y Versos"
+                  >
+                    <Edit3 size={13} />
+                  </button>
+
                   {/* Theme Toggle Button */}
                   <button
                     onClick={() => setTheme(t => t === 'astrolabe' ? 'cosmos' : 'astrolabe')}
@@ -746,7 +857,7 @@ export default function App() {
 
             {/* Scrollable list of Arcanos */}
             <div className="flex-1 min-h-0 overflow-y-auto custom-scrollbar pr-1 mb-2.5 space-y-1">
-              {poems.map((poem, idx) => {
+              {poemsList.map((poem, idx) => {
                 const isSelected = selectedPoemId === poem.id;
                 return (
                   <button
@@ -762,9 +873,22 @@ export default function App() {
                       <span className="text-xs font-serif font-medium tracking-wide">
                         {poem.title}
                       </span>
-                      {isSelected && (
-                        <span className="w-1.5 h-1.5 rounded-full bg-[#D4AF37] shadow-[0_0_6px_#D4AF37]" />
-                      )}
+                      <div className="flex items-center gap-1.5">
+                        {isSelected && (
+                          <span className="w-1.5 h-1.5 rounded-full bg-[#D4AF37] shadow-[0_0_6px_#D4AF37]" />
+                        )}
+                        <span
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSelectedPoemId(poem.id);
+                            setIsPoemEditorOpen(true);
+                          }}
+                          className="p-1 rounded text-gray-500 hover:text-[#D4AF37] hover:bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity"
+                          title="Editar poema de este arcano"
+                        >
+                          <Edit3 size={11} />
+                        </span>
+                      </div>
                     </div>
                     <p className={`text-[10px] italic line-clamp-1 mt-0.5 font-serif transition-colors ${
                       isSelected ? 'text-amber-200/80' : 'text-gray-500 group-hover:text-gray-400'
@@ -787,6 +911,16 @@ export default function App() {
                 <span className="relative z-10 text-[11px] uppercase tracking-[0.16em] whitespace-nowrap group-hover:text-[#050B14] transition-colors duration-500 font-semibold font-serif">
                   Iniciar Lectura
                 </span>
+              </button>
+
+              {/* Edit Current Arcana Button */}
+              <button
+                onClick={() => setIsPoemEditorOpen(true)}
+                className="w-full flex items-center justify-center gap-2 px-3 py-1.5 rounded-xl border border-white/10 hover:border-[#D4AF37]/50 bg-white/[0.03] hover:bg-[#D4AF37]/10 text-xs font-serif text-gray-300 hover:text-[#D4AF37] transition-all cursor-pointer shadow-sm active:scale-[0.99]"
+                title="Editar título, versos y pregunta de este arcano"
+              >
+                <Edit3 size={13} className="text-[#D4AF37]" />
+                <span className="text-[11px] font-semibold">Editar Este Arcano</span>
               </button>
 
               {/* Botón Unificado de Audio & Voz */}
@@ -854,7 +988,7 @@ export default function App() {
                 Arcanos
               </h1>
               <span className="text-[10px] font-mono text-gray-400 px-1.5 py-0.5 rounded-full bg-white/5 border border-white/10 hidden sm:inline-block">
-                {currentIndex + 1}/{poems.length}
+                {currentIndex + 1}/{poemsList.length}
               </span>
               <PWAInstallButton variant="topbar" />
             </div>
@@ -891,6 +1025,15 @@ export default function App() {
                   )}
                 </button>
               )}
+
+              {/* Edit Arcana Trigger for Mobile */}
+              <button
+                onClick={() => setIsPoemEditorOpen(true)}
+                className="w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center text-[#D4AF37]/80 hover:text-[#D4AF37] rounded-xl bg-white/[0.04] border border-white/10 hover:border-[#D4AF37]/40 hover:bg-[#D4AF37]/10 active:scale-95 transition-all shadow-sm shrink-0"
+                title="Editar poema de este arcano"
+              >
+                <Edit3 size={14} />
+              </button>
 
               {/* Studio Recording Trigger */}
               <button
@@ -1042,17 +1185,29 @@ export default function App() {
                     26 Arcanos Mayores & Arcanos Ocultos
                   </p>
                 </div>
-                <button
-                  onClick={() => setIsMobileDrawerOpen(false)}
-                  className="p-2 text-gray-400 hover:text-white rounded-full bg-white/5 border border-white/10"
-                >
-                  <X size={18} />
-                </button>
+                <div className="flex items-center gap-1.5">
+                  <button
+                    onClick={() => {
+                      setIsMobileDrawerOpen(false);
+                      setIsPoemEditorOpen(true);
+                    }}
+                    className="p-2 text-[#D4AF37] hover:text-white rounded-full bg-white/5 border border-[#D4AF37]/30 active:scale-95 transition-transform"
+                    title="Editar Poemas"
+                  >
+                    <Edit3 size={16} />
+                  </button>
+                  <button
+                    onClick={() => setIsMobileDrawerOpen(false)}
+                    className="p-2 text-gray-400 hover:text-white rounded-full bg-white/5 border border-white/10"
+                  >
+                    <X size={18} />
+                  </button>
+                </div>
               </div>
 
               {/* Scrollable list */}
               <div className="flex-1 overflow-y-auto custom-scrollbar space-y-2.5 pr-1 py-1">
-                {poems.map((poem, idx) => {
+                {poemsList.map((poem, idx) => {
                   const isSelected = selectedPoemId === poem.id;
                   return (
                     <button
@@ -1391,18 +1546,55 @@ export default function App() {
         onSkip={skip}
         onStart={handleStart}
         onPrev={() => {
-          const prev = (currentIndex - 1 + poems.length) % poems.length;
-          setSelectedPoemId(poems[prev].id);
+          const prev = (currentIndex - 1 + poemsList.length) % poemsList.length;
+          setSelectedPoemId(poemsList[prev].id);
         }}
         onNext={() => {
-          const next = (currentIndex + 1) % poems.length;
-          setSelectedPoemId(poems[next].id);
+          const next = (currentIndex + 1) % poemsList.length;
+          setSelectedPoemId(poemsList[next].id);
         }}
         onOpenVoiceModal={() => setIsVoiceModalOpen(true)}
         onOpenInscriptionModal={() => setIsInscriptionModalOpen(true)}
+        onEditPoem={() => setIsPoemEditorOpen(true)}
         activeVoiceName={activeVoiceName}
         aspectRatio={aspectRatio}
       />
+
+      {/* Poem Editor Modal */}
+      <AnimatePresence>
+        {isPoemEditorOpen && (
+          <PoemEditorModal
+            key="poem-editor-modal"
+            isOpen={isPoemEditorOpen}
+            onClose={() => setIsPoemEditorOpen(false)}
+            poems={poemsList}
+            selectedPoemId={selectedPoemId}
+            onSelectPoemId={setSelectedPoemId}
+            onSavePoem={handleSavePoem}
+            onResetPoem={handleResetPoemToDefault}
+            onResetAllPoems={handleResetAllPoems}
+            onCreateNewPoem={handleCreateNewPoem}
+            onDeletePoem={handleDeletePoem}
+            onImportPoems={handleImportPoems}
+          />
+        )}
+      </AnimatePresence>
+
+      {/* Toast Notification when a poem is modified or saved */}
+      <AnimatePresence>
+        {poemToast && (
+          <motion.div
+            key="toast-poem-notification"
+            initial={{ opacity: 0, y: 30, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 30, scale: 0.95 }}
+            className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2.5 px-4 py-2.5 rounded-2xl bg-[#02060F]/95 border border-[#D4AF37] shadow-[0_0_35px_rgba(212,175,55,0.4)] text-amber-200 text-xs backdrop-blur-xl max-w-sm sm:max-w-md w-[90%] text-center justify-center font-serif"
+          >
+            <Sparkles size={14} className="text-[#D4AF37] shrink-0" />
+            <span className="truncate">{poemToast}</span>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

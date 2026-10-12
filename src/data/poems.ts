@@ -368,3 +368,5 @@ export const poems: Poem[] = [
     ]
   }
 ];
+
+export const defaultPoems: Poem[] = poems;

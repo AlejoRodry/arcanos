@@ -164,17 +164,8 @@ export const RadiantInstallModal: React.FC<InstallModalProps> = ({
                 </p>
               </div>
 
-              {/* Direct Install CTA Button */}
-              <button
-                onClick={onInstall}
-                className="w-full py-3 rounded-2xl bg-gradient-to-r from-[#D4AF37] via-[#F3E5AB] to-[#D4AF37] text-[#050B14] font-serif font-bold text-sm tracking-widest uppercase shadow-[0_0_25px_rgba(212,175,55,0.35)] active:scale-98 hover:brightness-110 transition-all flex items-center justify-center gap-2 cursor-pointer"
-              >
-                <Download size={16} className="fill-[#050B14]" />
-                <span>{isInstallable ? 'Instalar en mi Pantalla' : 'Reintentar Instalación'}</span>
-              </button>
-
               <div className="text-[11px] font-serif text-[#D4AF37] tracking-wider uppercase pt-1">
-                Instalación manual desde Chrome:
+                Instalación en Android (Google Chrome):
               </div>
 
               <div className="space-y-2.5">

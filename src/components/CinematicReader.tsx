@@ -123,7 +123,7 @@ export const CinematicReader: React.FC<CinematicReaderProps> = ({
                 </button>
               </div>
 
-              {/* Quick Options Pills Row (Voz, Círculo Sagrado & Editar) */}
+              {/* Quick Options Pills Row (Voz & Círculo Sagrado) */}
               <div className="flex items-center justify-center gap-2 w-full pt-1">
                 {onOpenVoiceModal && (
                   <button
@@ -146,33 +146,22 @@ export const CinematicReader: React.FC<CinematicReaderProps> = ({
                     <span className="text-[11px] font-sans truncate">Círculo</span>
                   </button>
                 )}
-
-                {onEditPoem && (
-                  <button
-                    onClick={onEditPoem}
-                    className="flex-1 flex items-center justify-center gap-1.5 py-2 px-2.5 rounded-xl bg-[#D4AF37]/10 border border-[#D4AF37]/30 hover:border-[#D4AF37]/60 hover:bg-[#D4AF37]/20 text-xs text-[#D4AF37] active:scale-95 transition-all shadow-sm"
-                    title="Editar poema de este arcano"
-                  >
-                    <Edit3 size={13} className="text-[#D4AF37] shrink-0" />
-                    <span className="text-[11px] font-sans font-medium truncate">Editar</span>
-                  </button>
-                )}
               </div>
             </div>
 
-            {/* Desktop Actions Row */}
-            <div className="hidden md:flex items-center gap-3 mt-3 pointer-events-auto">
-              {onEditPoem && (
+            {/* Único Botón de Edición del Poema (Visible en Móvil y Escritorio) */}
+            {onEditPoem && (
+              <div className="flex items-center justify-center mt-2.5 pointer-events-auto">
                 <button
                   onClick={onEditPoem}
-                  className="px-3.5 py-1.5 rounded-xl border border-white/15 bg-white/[0.04] hover:bg-[#D4AF37]/15 hover:border-[#D4AF37]/50 text-xs font-serif text-gray-300 hover:text-[#D4AF37] transition-all flex items-center gap-1.5 shadow-sm active:scale-95 cursor-pointer"
+                  className="px-4 py-2 rounded-xl border border-[#D4AF37]/40 bg-[#D4AF37]/10 hover:bg-[#D4AF37]/20 hover:border-[#D4AF37]/70 text-xs font-serif text-[#D4AF37] transition-all flex items-center gap-2 shadow-sm active:scale-95 cursor-pointer"
                   title="Editar este poema (título, versos, pregunta del umbral)"
                 >
-                  <Edit3 size={13} className="text-[#D4AF37]" />
-                  <span>Editar Poema</span>
+                  <Edit3 size={14} className="text-[#D4AF37]" />
+                  <span className="font-semibold tracking-wide">Editar Poema</span>
                 </button>
-              )}
-            </div>
+              </div>
+            )}
 
             {/* Keyboard hints (Desktop Only) */}
             <div className="hidden md:flex mt-2 text-[10px] font-sans tracking-wider text-gray-500 uppercase items-center gap-2">

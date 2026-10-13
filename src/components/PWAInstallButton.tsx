@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   Download, 
@@ -16,8 +17,9 @@ import {
 import { usePWAInstall } from '../hooks/usePWAInstall';
 
 interface PWAInstallButtonProps {
-  variant?: 'compact' | 'full' | 'topbar';
+  variant?: 'compact' | 'full' | 'topbar' | 'banner' | 'icon';
   className?: string;
+  onDismiss?: () => void;
 }
 
 interface InstallModalProps {
@@ -51,14 +53,14 @@ export const RadiantInstallModal: React.FC<InstallModalProps> = ({
 
   if (!isOpen) return null;
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3.5 sm:p-5 bg-black/85 backdrop-blur-xl">
+  const modalMarkup = (
+    <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center p-0 sm:p-4 md:p-6 bg-black/85 backdrop-blur-xl">
       <motion.div
-        initial={{ scale: 0.94, opacity: 0, y: 15 }}
+        initial={{ scale: 0.96, opacity: 0, y: 25 }}
         animate={{ scale: 1, opacity: 1, y: 0 }}
-        exit={{ scale: 0.94, opacity: 0, y: 15 }}
+        exit={{ scale: 0.96, opacity: 0, y: 25 }}
         transition={{ duration: 0.25, ease: 'easeOut' }}
-        className="relative w-full max-w-md bg-[#050B14]/98 border border-[#D4AF37]/50 rounded-3xl shadow-[0_12px_60px_rgba(0,0,0,0.95),0_0_40px_rgba(212,175,55,0.15)] text-white overflow-hidden flex flex-col"
+        className="relative w-full sm:max-w-xl md:max-w-2xl h-[92vh] sm:h-auto max-h-[96vh] bg-[#050B14]/98 border-t sm:border border-[#D4AF37]/50 rounded-t-[32px] sm:rounded-3xl shadow-[0_12px_60px_rgba(0,0,0,0.95),0_0_40px_rgba(212,175,55,0.15)] text-white overflow-hidden flex flex-col"
       >
         {/* Subtle background astrolabe glow */}
         <div className="absolute top-0 right-0 w-64 h-64 bg-radial from-[#D4AF37]/10 via-transparent to-transparent pointer-events-none -mr-20 -mt-20 blur-2xl" />
@@ -150,7 +152,7 @@ export const RadiantInstallModal: React.FC<InstallModalProps> = ({
         </div>
 
         {/* Modal Content */}
-        <div className="p-5 sm:p-6 space-y-4 max-h-[60vh] overflow-y-auto text-xs font-sans">
+        <div className="flex-1 p-5 sm:p-6 space-y-4 overflow-y-auto custom-scrollbar text-xs font-sans">
           {activeTab === 'android' && (
             <div className="space-y-4">
               <div className="p-3.5 rounded-2xl bg-white/[0.02] border border-white/10 text-gray-300">
@@ -298,11 +300,17 @@ export const RadiantInstallModal: React.FC<InstallModalProps> = ({
       </motion.div>
     </div>
   );
+
+  if (typeof document !== 'undefined') {
+    return createPortal(modalMarkup, document.body);
+  }
+  return modalMarkup;
 };
 
 export const PWAInstallButton: React.FC<PWAInstallButtonProps> = ({ 
   variant = 'compact',
-  className = '' 
+  className = '',
+  onDismiss
 }) => {
   const { 
     isInstallable, 
@@ -356,6 +364,106 @@ export const PWAInstallButton: React.FC<PWAInstallButtonProps> = ({
     setInstallStatusMsg('Sigue los 3 sencillos pasos indicados en el menú de Chrome (⋮).');
   };
 
+  // Banner variant: Spans the entire screen (abarca toda la pantalla) across the bottom
+  if (variant === 'banner') {
+    return (
+      <>
+        <div className={`fixed bottom-0 left-0 right-0 z-40 bg-[#02060F]/95 border-t border-[#D4AF37]/50 backdrop-blur-2xl px-3 sm:px-6 py-2.5 sm:py-3 shadow-[0_-10px_40px_rgba(0,0,0,0.9),0_0_20px_rgba(212,175,55,0.12)] transition-all ${className}`}>
+          <div className="max-w-7xl mx-auto flex items-center justify-between gap-3 sm:gap-4">
+            <div 
+              onClick={handleButtonClick}
+              className="flex items-center gap-3 min-w-0 flex-1 cursor-pointer group"
+            >
+              <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-gradient-to-br from-[#D4AF37] via-[#F3E5AB] to-[#D4AF37] text-[#050B14] flex items-center justify-center shadow-[0_0_12px_rgba(212,175,55,0.35)] shrink-0 group-hover:scale-105 transition-transform">
+                <Download size={16} className="fill-[#050B14]" />
+              </div>
+              <div className="text-left min-w-0 flex-1">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="font-serif text-xs sm:text-sm font-semibold text-[#D4AF37] tracking-wider uppercase group-hover:text-[#F3E5AB] transition-colors">
+                    Instalar Oráculo en tu Teléfono
+                  </span>
+                  <span className="text-[9px] font-mono px-2 py-0.5 rounded-full border border-[#D4AF37]/50 bg-[#D4AF37]/20 text-[#F3E5AB] font-bold">
+                    PWA OFFLINE
+                  </span>
+                </div>
+                <p className="text-[11px] sm:text-xs text-gray-300 font-serif leading-tight mt-0.5">
+                  Añade el oráculo a tu pantalla de inicio • 100% disponible sin conexión a internet
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2 shrink-0">
+              <button
+                onClick={handleButtonClick}
+                className="px-3.5 sm:px-5 py-1.5 sm:py-2 rounded-xl bg-gradient-to-r from-[#D4AF37] via-[#F3E5AB] to-[#D4AF37] text-[#050B14] font-serif font-bold text-xs uppercase tracking-wider shadow-[0_0_18px_rgba(212,175,55,0.35)] active:scale-95 hover:brightness-110 transition-all flex items-center gap-1.5 cursor-pointer"
+              >
+                <Download size={13} className="fill-[#050B14]" />
+                <span className="hidden sm:inline">Instalar Ahora</span>
+                <span className="sm:hidden">Instalar</span>
+              </button>
+
+              {onDismiss && (
+                <button
+                  onClick={onDismiss}
+                  className="p-1.5 sm:p-2 rounded-xl text-gray-400 hover:text-white hover:bg-white/10 active:scale-95 transition-all cursor-pointer"
+                  title="Cerrar aviso de instalación"
+                >
+                  <X size={16} />
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+
+        <AnimatePresence>
+          {showModal && (
+            <RadiantInstallModal
+              isOpen={showModal}
+              onClose={() => setShowModal(false)}
+              isInstallable={isInstallable}
+              isInAppBrowser={isInAppBrowser}
+              isAndroid={isAndroid}
+              isIOS={isIOS}
+              onInstall={handleForceInstall}
+              statusMsg={installStatusMsg}
+            />
+          )}
+        </AnimatePresence>
+      </>
+    );
+  }
+
+  // Icon variant: Discreet icon button for toolbars and top headers
+  if (variant === 'icon') {
+    return (
+      <>
+        <button
+          onClick={handleButtonClick}
+          className={`w-7 h-7 flex items-center justify-center text-[#D4AF37]/80 hover:text-[#D4AF37] bg-white/[0.03] hover:bg-[#D4AF37]/15 border border-white/10 hover:border-[#D4AF37]/40 rounded-lg active:scale-95 transition-all shadow-sm cursor-pointer ${className}`}
+          title="Instalar oráculo como App (PWA)"
+          aria-label="Instalar como App"
+        >
+          <Download size={13} className="text-[#D4AF37]" />
+        </button>
+
+        <AnimatePresence>
+          {showModal && (
+            <RadiantInstallModal
+              isOpen={showModal}
+              onClose={() => setShowModal(false)}
+              isInstallable={isInstallable}
+              isInAppBrowser={isInAppBrowser}
+              isAndroid={isAndroid}
+              isIOS={isIOS}
+              onInstall={handleForceInstall}
+              statusMsg={installStatusMsg}
+            />
+          )}
+        </AnimatePresence>
+      </>
+    );
+  }
+
   // Topbar variant: Elegant gold pill matching the header aesthetic
   if (variant === 'topbar') {
     return (
@@ -396,33 +504,34 @@ export const PWAInstallButton: React.FC<PWAInstallButtonProps> = ({
       <>
         <div 
           onClick={handleButtonClick}
-          className={`group relative overflow-hidden p-2.5 rounded-xl bg-gradient-to-r from-white/[0.04] via-[#D4AF37]/10 to-white/[0.02] border border-[#D4AF37]/40 hover:border-[#D4AF37]/80 hover:bg-[#D4AF37]/15 transition-all duration-300 cursor-pointer shadow-[0_4px_16px_rgba(0,0,0,0.35),0_0_12px_rgba(212,175,55,0.08)] active:scale-[0.99] ${className}`}
+          className={`group relative overflow-hidden p-3 rounded-2xl bg-gradient-to-r from-white/[0.05] via-[#D4AF37]/15 to-white/[0.03] border border-[#D4AF37]/50 hover:border-[#D4AF37] hover:bg-[#D4AF37]/20 transition-all duration-300 cursor-pointer shadow-[0_4px_20px_rgba(0,0,0,0.4),0_0_15px_rgba(212,175,55,0.12)] active:scale-[0.99] w-full ${className}`}
         >
           {/* Subtle gold specular gradient ray */}
-          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-[#D4AF37]/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
+          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-[#D4AF37]/15 to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
 
-          <div className="relative z-10 flex items-center justify-between gap-2.5">
-            <div className="flex items-center gap-2.5 min-w-0">
-              <div className="w-7.5 h-7.5 rounded-lg bg-gradient-to-br from-[#D4AF37] via-[#F3E5AB] to-[#D4AF37] text-[#050B14] flex items-center justify-center shadow-[0_0_10px_rgba(212,175,55,0.3)] shrink-0 group-hover:scale-105 transition-transform">
-                <Download size={14} className="fill-[#050B14]" />
+          <div className="relative z-10 flex items-center justify-between gap-3">
+            <div className="flex items-center gap-3 min-w-0 flex-1">
+              <div className="w-8.5 h-8.5 rounded-xl bg-gradient-to-br from-[#D4AF37] via-[#F3E5AB] to-[#D4AF37] text-[#050B14] flex items-center justify-center shadow-[0_0_12px_rgba(212,175,55,0.35)] shrink-0 group-hover:scale-105 transition-transform">
+                <Download size={15} className="fill-[#050B14]" />
               </div>
-              <div className="text-left min-w-0 truncate">
-                <div className="flex items-center gap-1.5">
+              <div className="text-left min-w-0 flex-1">
+                <div className="flex items-center gap-2">
                   <span className="font-serif text-xs font-semibold text-[#D4AF37] tracking-wider uppercase group-hover:text-[#F3E5AB] transition-colors truncate">
-                    Instalar App
+                    Instalar en Pantalla
                   </span>
-                  <span className="text-[8px] font-mono px-1.5 py-0.2 rounded-full border border-[#D4AF37]/40 bg-[#D4AF37]/15 text-[#F3E5AB] shrink-0">
+                  <span className="text-[9px] font-mono px-1.5 py-0.5 rounded-full border border-[#D4AF37]/50 bg-[#D4AF37]/20 text-[#F3E5AB] font-bold shrink-0">
                     OFFLINE
                   </span>
                 </div>
-                <p className="text-[10px] text-gray-400 font-serif leading-tight truncate mt-0.5">
-                  Toca aquí para guardarla en tu dispositivo
+                <p className="text-[11px] text-gray-300 font-serif leading-snug truncate mt-0.5">
+                  100% disponible sin internet ni descargas
                 </p>
               </div>
             </div>
 
-            <div className="w-6 h-6 rounded-lg bg-white/[0.04] border border-[#D4AF37]/30 text-[#D4AF37] flex items-center justify-center group-hover:bg-[#D4AF37]/20 group-hover:border-[#D4AF37]/60 group-hover:translate-x-0.5 transition-all shrink-0">
-              <ChevronRight size={13} />
+            <div className="px-2 py-1 rounded-lg bg-[#D4AF37]/15 border border-[#D4AF37]/40 text-[#D4AF37] text-[10px] font-serif font-bold uppercase tracking-wider group-hover:bg-[#D4AF37] group-hover:text-[#050B14] transition-all shrink-0 flex items-center gap-1 shadow-sm">
+              <span>Abrir</span>
+              <ChevronRight size={12} className="group-hover:translate-x-0.5 transition-transform" />
             </div>
           </div>
         </div>

@@ -24,8 +24,7 @@ import {
   Volume1,
   Mic,
   Video,
-  FolderDown,
-  Edit3
+  FolderDown
 } from 'lucide-react';
 import { circleInscriptions, CircleInscription, getNextCircleInscription } from './data/circleInscriptions';
 import { useScreenRecorder, AspectRatio } from './hooks/useScreenRecorder';
@@ -805,6 +804,9 @@ export default function App() {
                 </h1>
                 
                 <div className="flex items-center gap-1">
+                  {/* PWA Install Trigger */}
+                  <PWAInstallButton variant="icon" />
+
                   {/* Studio / Video Recording Trigger */}
                   <button
                     onClick={() => setIsStudioModalOpen(true)}
@@ -830,14 +832,6 @@ export default function App() {
                     <Info size={14} />
                   </button>
 
-                  {/* Editor de Poemas Trigger */}
-                  <button
-                    onClick={() => setIsPoemEditorOpen(true)}
-                    className="w-7 h-7 flex items-center justify-center text-[#D4AF37]/80 hover:text-[#D4AF37] transition-all rounded-lg bg-white/[0.03] hover:bg-[#D4AF37]/15 border border-white/10 hover:border-[#D4AF37]/40 active:scale-95 shadow-sm cursor-pointer"
-                    title="Editar Poemas y Versos"
-                  >
-                    <Edit3 size={13} />
-                  </button>
 
                   {/* Theme Toggle Button */}
                   <button
@@ -877,17 +871,6 @@ export default function App() {
                         {isSelected && (
                           <span className="w-1.5 h-1.5 rounded-full bg-[#D4AF37] shadow-[0_0_6px_#D4AF37]" />
                         )}
-                        <span
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setSelectedPoemId(poem.id);
-                            setIsPoemEditorOpen(true);
-                          }}
-                          className="p-1 rounded text-gray-500 hover:text-[#D4AF37] hover:bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity"
-                          title="Editar poema de este arcano"
-                        >
-                          <Edit3 size={11} />
-                        </span>
                       </div>
                     </div>
                     <p className={`text-[10px] italic line-clamp-1 mt-0.5 font-serif transition-colors ${
@@ -913,15 +896,6 @@ export default function App() {
                 </span>
               </button>
 
-              {/* Edit Current Arcana Button */}
-              <button
-                onClick={() => setIsPoemEditorOpen(true)}
-                className="w-full flex items-center justify-center gap-2 px-3 py-1.5 rounded-xl border border-white/10 hover:border-[#D4AF37]/50 bg-white/[0.03] hover:bg-[#D4AF37]/10 text-xs font-serif text-gray-300 hover:text-[#D4AF37] transition-all cursor-pointer shadow-sm active:scale-[0.99]"
-                title="Editar título, versos y pregunta de este arcano"
-              >
-                <Edit3 size={13} className="text-[#D4AF37]" />
-                <span className="text-[11px] font-semibold">Editar Este Arcano</span>
-              </button>
 
               {/* Botón Unificado de Audio & Voz */}
               <button
@@ -959,11 +933,6 @@ export default function App() {
                   <ChevronRight size={12} className="text-[#D4AF37]/60 group-hover:translate-x-0.5 transition-transform" />
                 </div>
               </button>
-
-              {/* PWA Install Button for Desktop */}
-              <div>
-                <PWAInstallButton variant="full" className="w-full" />
-              </div>
             </div>
           </motion.div>
         )}
@@ -1026,14 +995,6 @@ export default function App() {
                 </button>
               )}
 
-              {/* Edit Arcana Trigger for Mobile */}
-              <button
-                onClick={() => setIsPoemEditorOpen(true)}
-                className="w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center text-[#D4AF37]/80 hover:text-[#D4AF37] rounded-xl bg-white/[0.04] border border-white/10 hover:border-[#D4AF37]/40 hover:bg-[#D4AF37]/10 active:scale-95 transition-all shadow-sm shrink-0"
-                title="Editar poema de este arcano"
-              >
-                <Edit3 size={14} />
-              </button>
 
               {/* Studio Recording Trigger */}
               <button
@@ -1187,16 +1148,6 @@ export default function App() {
                 </div>
                 <div className="flex items-center gap-1.5">
                   <button
-                    onClick={() => {
-                      setIsMobileDrawerOpen(false);
-                      setIsPoemEditorOpen(true);
-                    }}
-                    className="p-2 text-[#D4AF37] hover:text-white rounded-full bg-white/5 border border-[#D4AF37]/30 active:scale-95 transition-transform"
-                    title="Editar Poemas"
-                  >
-                    <Edit3 size={16} />
-                  </button>
-                  <button
                     onClick={() => setIsMobileDrawerOpen(false)}
                     className="p-2 text-gray-400 hover:text-white rounded-full bg-white/5 border border-white/10"
                   >
@@ -1281,9 +1232,6 @@ export default function App() {
                     <ChevronRight size={14} className="text-[#D4AF37]/60 group-hover:translate-x-0.5 transition-transform" />
                   </div>
                 </button>
-
-                {/* PWA Install Button for Mobile */}
-                <PWAInstallButton variant="full" className="w-full mt-1" />
               </div>
             </motion.div>
           </div>
@@ -1529,8 +1477,6 @@ export default function App() {
           </button>
         </div>
       )}
-
-
 
       {/* ======================================================== */}
       {/* --- CINEMATIC READER (Center Display & Recitation) --- */}
